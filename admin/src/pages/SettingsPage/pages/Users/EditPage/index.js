@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect} from 'react';
 import { useRouteMatch, useHistory } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import PropTypes from 'prop-types';
@@ -34,7 +34,6 @@ import { formatAPIErrors, getFullName } from '../../../../../utils';
 import { fetchUser, putUser, fetchPermissions, postUserPermission, fetchUserPermission, fetchFactories, fetchFronts } from './utils/api';
 import layout from './utils/layout';
 import { editValidation } from '../utils/validations/users';
-import SelectRoles from '../components/SelectRoles';
 import { Select, Option } from '@strapi/design-system/Select';
 import { makeSelectModelLinks } from '../../../../../content-manager/pages/App/selectors';
 import { useSelector, shallowEqual } from 'react-redux';
@@ -45,6 +44,8 @@ const EditPage = ({ canUpdate }) => {
 
   const { formatMessage } = useIntl();
   const [permission, setPermission] = useState(null);
+  const [permissionUserLogged, setPermissionUserLogged] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const {
     params: { id },
@@ -54,7 +55,7 @@ const EditPage = ({ canUpdate }) => {
 
   const toggleNotification = useNotification();
   const { lockApp, unlockApp } = useOverlayBlocker();
-  useFocusWhenNavigate(); 
+  useFocusWhenNavigate();
   const [factoriesSelected, setFactoriesSelected] = useState([])
   const [frontsSelecteds, setFrontsSelecteds] = useState([])
 
@@ -92,6 +93,24 @@ const EditPage = ({ canUpdate }) => {
       console.log(err.response.status);
     },
   });
+
+  useEffect(() => {
+
+    ( async () => {
+      try {
+        setLoading(true)
+        const userInfos = auth.getUserInfo();
+        fetchUserPermission(userInfos.id).then((res) => {
+          setPermissionUserLogged(res[0].id_permissao)
+        });
+      } catch (err) {
+      console.error(err);
+      } finally {
+        setLoading(false)
+      }
+    }
+    )();
+  }, []);
 
   if (!permission) {
     fetchUserPermission(id).then((res) => {
@@ -150,7 +169,8 @@ const EditPage = ({ canUpdate }) => {
       const frentes = JSON.stringify(frontsSelecteds);
       const usinas = JSON.stringify(factoriesSelected);
 
-      const userInfos = auth.getUserInfo(); await postUserPermission({ id_usuario: id, id_permissao: body.permission, frentes, usinas });
+      const userInfos = auth.getUserInfo();
+      await postUserPermission({ id_usuario: id, id_permissao: body.permission, frentes, usinas });
 
       // The user is updating himself
       if (id.toString() === userInfos.id.toString()) {
@@ -203,32 +223,32 @@ const EditPage = ({ canUpdate }) => {
   const title = formatMessage(headerLabel, { name: headerLabelName });
 
   const valueAll = () => {
-    var result = getFactories.data.filter(function(item){ return factoriesSelected.indexOf(item.id) > -1});   
+    var result = getFactories.data.filter(function(item){ return factoriesSelected.indexOf(item.id) > -1});
     return getFactories.data.length === result.length
   }
 
 
   const indeterminateFactories = () => {
-    var result = getFactories.data.filter(function(item){ return factoriesSelected.indexOf(item.id) > -1}); 
+    var result = getFactories.data.filter(function(item){ return factoriesSelected.indexOf(item.id) > -1});
     return factoriesSelected.length > 0 && result.length < getFactories.data.length
   }
 
   const valueAllFronts = () => {
-    var result = getFronts.data.filter(function(item){ return frontsSelecteds.indexOf(item.id) > -1});   
+    var result = getFronts.data.filter(function(item){ return frontsSelecteds.indexOf(item.id) > -1});
     return getFronts.data.length === result.length
   }
 
   const indeterminateFronts = () => {
-    var result = getFronts.data.filter(function(item){ return frontsSelecteds.indexOf(item.id) > -1}); 
+    var result = getFronts.data.filter(function(item){ return frontsSelecteds.indexOf(item.id) > -1});
     return frontsSelecteds.length > 0 && result.length < getFronts.data.length
   }
 
   let permissionMaster = null
-  if(permissions && permissions.length) {
-    permissionMaster = permissions.find(item => item.Nome.toLowerCase() === 'masterdk');
+  if(permissions && permissions.data && permissions.data.length) {
+    permissionMaster = permissions.data.find(item => item.Nome.toLowerCase() === 'masterdk');
   }
 
-  if (isLoading) {
+  if (isLoading || loading) {
     return (
       <Main aria-busy="true">
         <SettingsPageTitle name="Users" />
@@ -238,7 +258,7 @@ const EditPage = ({ canUpdate }) => {
               {formatMessage({ id: 'form.button.save', defaultMessage: 'Save' })}
             </Button>
           }
-          title={title}
+          title=""
           navigationAction={
             <Link startIcon={<ArrowLeft />} to="/settings/users?pageSize=10&page=1&sort=firstname">
               {formatMessage({
@@ -292,7 +312,7 @@ const EditPage = ({ canUpdate }) => {
                   </Link>
                 }
               />
-              <ContentLayout>
+               <Box paddingRight={[10, 5, 1]} paddingLeft={[10, 5, 1]}>
                 {data?.registrationToken && (
                   <Box paddingBottom={6}>
                     <MagicLink registrationToken={data.registrationToken} />
@@ -352,7 +372,7 @@ const EditPage = ({ canUpdate }) => {
                         })}
                       </Typography>
                       <Grid gap={5}>
-                        {(permissions.data && permissions.data.length) && 
+                        {(permissions.data && permissions.data.length) &&
                           <GridItem col={6} xs={12}>
                             <Select
                               label="Permission"
@@ -365,7 +385,7 @@ const EditPage = ({ canUpdate }) => {
                             {
                               permissions.data.map(item => {
                                 if(item.Nome.toLowerCase() === 'masterdk') {
-                                  if(id && (permissionMaster && permissionMaster.id === permission))
+                                  if(permissionMaster && permissionMaster.id === permissionUserLogged)
                                     return (
                                       <Option value={item.id}>{item.Nome}</Option>
                                     )
@@ -380,17 +400,17 @@ const EditPage = ({ canUpdate }) => {
                           </GridItem>
                         }
 
-                        {(getFactories.data && getFactories.data.length) && 
+                        {(getFactories.data && getFactories.data.length) &&
                           <GridItem col={12} xs={12}>
                             <GridItem col={12} xs={12} padding={1}>
                               <Typography variant="delta" as="h3">Usinas</Typography>
                             </GridItem>
                             <Grid>
                               <GridItem col={12} xs={12} padding={1}>
-                                  <Checkbox 
-                                    onValueChange={(e) => onChangeAllFactories(e)} 
+                                  <Checkbox
+                                    onValueChange={(e) => onChangeAllFactories(e)}
                                     value={ valueAll() }
-                                    indeterminate={indeterminateFactories()} 
+                                    indeterminate={indeterminateFactories()}
                                   >
                                     <span>Todas</span>
                                   </Checkbox>
@@ -414,17 +434,17 @@ const EditPage = ({ canUpdate }) => {
                           </GridItem>
                         }
 
-                        {(getFronts.data && getFronts.data.length) && 
+                        {(getFronts.data && getFronts.data.length) &&
                           <GridItem col={12} xs={12}>
                             <GridItem col={12} xs={12} padding={1}>
                               <Typography variant="delta" as="h3">Frentes</Typography>
                             </GridItem>
                             <Grid>
                               <GridItem col={12} xs={12} padding={1}>
-                                  <Checkbox 
-                                    onValueChange={(e) => onChangeAllFronts(e)} 
+                                  <Checkbox
+                                    onValueChange={(e) => onChangeAllFronts(e)}
                                     value={ valueAllFronts() }
-                                    indeterminate={indeterminateFronts()} 
+                                    indeterminate={indeterminateFronts()}
                                   >
                                     <span>Todas</span>
                                   </Checkbox>
@@ -449,7 +469,7 @@ const EditPage = ({ canUpdate }) => {
                     </Stack>
                   </Box>
                 </Stack>
-              </ContentLayout>
+              </Box>
             </Form>
           );
         }}

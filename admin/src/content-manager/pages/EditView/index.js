@@ -123,7 +123,7 @@ const EditView = ({
       } finally {
         setIsLoading(false);
       }
-      
+
     }
       getData();
 

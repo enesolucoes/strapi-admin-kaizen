@@ -65,7 +65,7 @@ const ModalForm = ({ queryName, onToggle }) => {
       const usinas = JSON.stringify(factoriesSelected);
 
       await postUserPermission({ id_usuario: data.data.id, id_permissao: permission, frentes, usinas });
-      
+
       await queryClient.invalidateQueries(queryName);
       goNext();
       setIsSubmitting(false);
@@ -164,8 +164,8 @@ const ModalForm = ({ queryName, onToggle }) => {
   const {id} = JSON.parse(sessionStorage.getItem('userInfo') || {});
 
   if(listPermissions && listPermissions.length) {
-    
-    let id_permissao = null 
+
+    let id_permissao = null
 
     fetchUserPermission(id).then((res) => {
       id_permissao = res[0]?.id_permissao
@@ -246,7 +246,7 @@ const ModalForm = ({ queryName, onToggle }) => {
                           });
                         })}
 
-                      {(listPermissions.data && listPermissions.data.length) && 
+                      {(listPermissions.data && listPermissions.data.length) &&
                         <GridItem col={6} xs={12}>
                           <Select
                             label="Permission"
@@ -267,7 +267,7 @@ const ModalForm = ({ queryName, onToggle }) => {
                               } else {
                                 return (
                                   <Option value={item.id}>{item.Nome}</Option>
-                                ) 
+                                )
                               }
                             })
                           }
@@ -275,21 +275,21 @@ const ModalForm = ({ queryName, onToggle }) => {
                         </GridItem>
                       }
 
-                      {(getFactories.status === 'loading' || getFronts.status === 'loading') && 
+                      {(getFactories.status === 'loading' || getFronts.status === 'loading') &&
                         <LoadingIndicatorPage />
                       }
 
-                      {(getFactories.data && getFactories.data.length) && 
+                      {(getFactories.data && getFactories.data.length) &&
                         <GridItem col={12} xs={12}>
                           <GridItem col={12} xs={12} padding={1}>
                             <Typography variant="delta" as="h3">Usinas</Typography>
                           </GridItem>
                           <Grid>
                             <GridItem col={12} xs={12} padding={1}>
-                                <Checkbox 
-                                  onValueChange={(e) => onChangeAllFactories(e)} 
+                                <Checkbox
+                                  onValueChange={(e) => onChangeAllFactories(e)}
                                   value={ factoriesSelected.length === getFactories.data.length }
-                                  indeterminate={factoriesSelected.length > 0 && factoriesSelected.length < getFactories.data.length} 
+                                  indeterminate={factoriesSelected.length > 0 && factoriesSelected.length < getFactories.data.length}
                                 >
                                   <span>Todas</span>
                                 </Checkbox>
@@ -313,23 +313,24 @@ const ModalForm = ({ queryName, onToggle }) => {
                         </GridItem>
                       }
 
-                      {(getFronts.data && getFronts.data.length) && 
+                      {(getFronts.data && getFronts.data.length) &&
                         <GridItem col={12} xs={12}>
                           <GridItem col={12} xs={12} padding={1}>
                             <Typography variant="delta" as="h3">Frentes</Typography>
                           </GridItem>
                           <Grid>
                             <GridItem col={12} xs={12} padding={1}>
-                                <Checkbox 
-                                  onValueChange={(e) => onChangeAllFronts(e)} 
+                                <Checkbox
+                                  onValueChange={(e) => onChangeAllFronts(e)}
                                   value={ frontsSelecteds.length === getFronts.data.length }
-                                  indeterminate={frontsSelecteds.length > 0 && frontsSelecteds.length < getFronts.data.length} 
+                                  indeterminate={frontsSelecteds.length > 0 && frontsSelecteds.length < getFronts.data.length}
                                 >
                                   <span>Todas</span>
                                 </Checkbox>
                               </GridItem>
                             {
                               getFronts.data.map(item => {
+                                if (item.id_frente_original) return null
                                 const hasItem = frontsSelecteds.filter(front => front === item.id)
                                 return (
                                   <GridItem col={6} xs={6} padding={1} style={{ borderTop: '1px solid #e3e3e3' }}>
@@ -343,7 +344,7 @@ const ModalForm = ({ queryName, onToggle }) => {
                           </Grid>
                         </GridItem>
 }
-                      
+
                       </Grid>
                     </Box>
                   </Box>

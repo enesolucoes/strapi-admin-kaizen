@@ -8,7 +8,7 @@ import {
   useFocusWhenNavigate,
   NoPermissions,
 } from '@strapi/helper-plugin';
-import { ActionLayout, ContentLayout, HeaderLayout } from '@strapi/design-system/Layout';
+import { ActionLayout, HeaderLayout } from '@strapi/design-system/Layout';
 import { Button } from '@strapi/design-system/Button';
 import { Main } from '@strapi/design-system/Main';
 import { useNotifyAT } from '@strapi/design-system/LiveRegions';
@@ -24,6 +24,7 @@ import PaginationFooter from './PaginationFooter';
 import { deleteData, fetchData, fetchDataPermission, fetchDataUsersPermission } from './utils/api';
 import displayedFilters from './utils/displayedFilters';
 import tableHeaders from './utils/tableHeaders';
+import { Box } from '@strapi/design-system/Box';
 
 const ListPage = () => {
   const [isModalOpened, setIsModalOpen] = useState(false);
@@ -104,7 +105,7 @@ const ListPage = () => {
   }
 
   let newData = [];
-  
+
   if (data?.results.length && allPermissions?.data?.length && userPermissions?.data?.length && (idPermissionMaster)) {
 
     const {id} = JSON.parse(sessionStorage.getItem('userInfo') || {});
@@ -186,7 +187,7 @@ const ListPage = () => {
         />
       )}
 
-      <ContentLayout canRead={canRead}>
+      <Box paddingLeft={[10, 5, 1]} paddingRight={[10, 5, 1]}>
         {!canRead && <NoPermissions />}
         {status === 'error' && <div>TODO: An error occurred</div>}
         {canRead && (
@@ -212,7 +213,7 @@ const ListPage = () => {
             <PaginationFooter pagination={data?.pagination} />
           </>
         )}
-      </ContentLayout>
+      </Box>
       {isModalOpened && <ModalForm onToggle={handleToggle} queryName={queryName} />}
     </Main>
   );

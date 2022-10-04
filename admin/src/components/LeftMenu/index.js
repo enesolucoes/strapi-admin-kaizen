@@ -23,6 +23,7 @@ import Lock from '@strapi/icons/Lock';
 import Exit from '@strapi/icons/Exit';
 import { auth, usePersistentState, useAppInfos } from '@strapi/helper-plugin';
 import useConfigurations from '../../hooks/useConfigurations';
+import useModels from '../../content-manager/pages/App/useModels';
 
 const LinkUserWrapper = styled(Box)`
   width: 9.375rem;
@@ -53,8 +54,12 @@ const LinkUser = styled(Link)`
 `;
 
 const Container = styled.div`
-  overflow: auto; 
+  overflow: auto;
   height: calc(100% - 126px);
+`
+
+const ContainerDiv = styled.div`
+  margin-top: -32px;
 `
 
 const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }) => {
@@ -72,34 +77,37 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
   const { LoadingIndicatorPage, request, useNotification } = require('@strapi/helper-plugin');
   const toggleNotification = useNotification();
 
+  const { collectionTypeLinks } = useModels();
+
   useEffect(() => {
 
     ( async () => {
         try {
+          setCondensed(true)
           const { email, id } = JSON.parse(sessionStorage.getItem('userInfo') || {});
 
           const data2 = await request('/content-manager/collection-types/api::usuario-permissao.usuario-permissao/?filters[$and][0][id_usuario][$eq]=' + id, { method: 'GET' });
           const result = data2.results[0]
 
-          sessionStorage.setItem('usuario-permissao', JSON.stringify(result));
+          // sessionStorage.setItem('usuario-permissao', JSON.stringify(result));
 
           let data3 = null
           if (result && result.id_permissao) {
             data3 = await request('/content-manager/collection-types/api::permissao-menu.permissao-menu/?pageSize=1000&filters[$and][0][permissao][id][$eq]=' + result.id_permissao, { method: 'GET' });
             setPermissaoMenu(data3.results)
-            sessionStorage.setItem('permissaoMenu', JSON.stringify(data3.results));
+            // sessionStorage.setItem('permissaoMenu', JSON.stringify(data3.results));
           }
 
           let listPlugins = JSON.parse(sessionStorage.getItem('pluginsSectionLinks') || []);
 
           listPlugins = listPlugins.filter(item =>
-            item.to !== '/plugins/upload' && 
+            item.to !== '/plugins/upload' &&
             item.to !== '/plugins/permissoes'
           )
 
           const pluginsPermitidos = []
           listPlugins.map(item => {
-            const itemsMenu = data3.results.filter(itemT => itemT.menu === item.intlLabel.defaultMessage) 
+            const itemsMenu = data3.results.filter(itemT => itemT.menu === item.intlLabel.defaultMessage)
             if(itemsMenu.length) {
               const itemFormatted = item.intlLabel.id.split('.')
               pluginsPermitidos.push(itemFormatted[0])
@@ -115,7 +123,7 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
             });
             return;
           }
-    
+
           setPlugins(pluginsPermitidos)
 
 
@@ -173,9 +181,19 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
   }
 
 
-  const hasData = permissaoMenu.filter(item => item.tipo === 'tabela' && item.listar === true && !item.aba)
+  // const hasData = permissaoMenu.filter(item => item.tipo === 'tabela' && item.listar === true && !item.aba)
   const hasPermissionUsers = permissaoMenu.filter(item => item.menu === 'Usuários' && item.listar === true)
   const hasPermission = permissaoMenu.filter(item => item.menu === 'Permissões' && item.listar === true)
+
+  const collectionTypeLinksFiltered = collectionTypeLinks.filter((link) => {
+    const linkName = link.name.split(".")
+
+    const findLink2 = permissaoMenu && permissaoMenu.find(item => item.menu === linkName[1]);
+
+    if(findLink2 && (findLink2.listar)) {
+      return (findLink2)
+    }
+  });
 
   return (
     <MainNav condensed={condensed}>
@@ -192,11 +210,11 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
       <Container>
         <NavSections id="navsections">
 
-          {hasData.length > 0 ? (
+          {collectionTypeLinksFiltered.length > 0 ? (
             <NavLink to="/content-manager" icon={<Write/>}>
               {formatMessage({id: 'content-manager.plugin.name', defaultMessage: 'Content manager'})}
             </NavLink>
-          ) : null}
+          ) : <ContainerDiv />}
 
 
           {filteredPluginsSectionLinks.length > 0 ? (
@@ -204,7 +222,7 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
             {filteredPluginsSectionLinks.map(link => {
               const Icon = link.icon;
               const hasAbas = permissaoMenu.filter(item => (item.menu === link.intlLabel.defaultMessage) && item.aba)
-              
+
               if(hasAbas.length) {
                 const canList = hasAbas.filter(item => item.listar)
                 if (!canList.length) return null

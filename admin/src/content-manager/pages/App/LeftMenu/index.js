@@ -80,13 +80,18 @@ const LeftMenu = () => {
     sessionStorage.setItem('collectionLinksDados', JSON.stringify(sortBy(titleLinks, ['value'])));
   }
 
+  const omitMenus = [
+    'permissao', 'permissao-menu', 'usuario-permissao', 'tempos-bkp', 'equipamento-status-bkp'
+  ]
 
   const collectionTypeLinksFiltered = collectionTypeLinks.filter((link) => {
     const linkName = link.name.split(".")
 
+    const omitMenu = omitMenus.includes(linkName[1])
+
     const findLink2 = permissaoMenu && permissaoMenu.find(item => item.menu === linkName[1]);
 
-    if(findLink2 && (findLink2.listar)) {
+    if(findLink2 && (findLink2.listar) && !omitMenu) {
       return (findLink2)
     }
   });

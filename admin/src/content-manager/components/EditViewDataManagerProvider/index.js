@@ -297,8 +297,26 @@ const EditViewDataManagerProvider = ({
         const formData = createFormData(modifiedData);
 
         if (isCreatingEntry) {
+          const eventSaveFormNew = new CustomEvent('saveFormNew', {
+            detail: {
+              saveEdit: true,
+              idUsina: formData.usina
+            }
+          })
+
+          document.dispatchEvent(eventSaveFormNew)
+          window.dispatchEvent(eventSaveFormNew)
           onPost(formData, trackerProperty);
         } else {
+          const eventSaveForm = new CustomEvent('saveForm', {
+            detail: {
+              saveEdit: true,
+              idUsina: formData.usina
+            }
+          })
+
+          document.dispatchEvent(eventSaveForm)
+          window.dispatchEvent(eventSaveForm)
           onPut(formData, trackerProperty);
         }
       } catch (err) {

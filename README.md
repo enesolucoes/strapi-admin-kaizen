@@ -1,4 +1,4 @@
-# Strapi built-in admin panel 1
+# Strapi built-in admin panel
 
 ## Description
 
