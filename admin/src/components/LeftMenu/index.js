@@ -195,6 +195,8 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
     }
   });
 
+  console.log('teste')
+
   return (
     <MainNav condensed={condensed}>
       <NavBrand
