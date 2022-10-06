@@ -19,7 +19,7 @@ const ContainerSideNav = styled.div`
   position: fixed;
   height: 100%;
   background: white;
-  zIndex: 9999;
+  z-index: 9999;
 `
 
 const AppLayout = ({ children, sideNav, menuCondensed }) => {

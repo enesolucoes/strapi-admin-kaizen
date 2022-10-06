@@ -25,6 +25,9 @@ import { auth, usePersistentState, useAppInfos } from '@strapi/helper-plugin';
 import useConfigurations from '../../hooks/useConfigurations';
 import useModels from '../../content-manager/pages/App/useModels';
 
+
+import { Tabs, Tab, TabGroup, TabPanels, TabPanel } from '@strapi/design-system/Tabs';
+
 const LinkUserWrapper = styled(Box)`
   width: 9.375rem;
   position: absolute;
@@ -62,6 +65,27 @@ const ContainerDiv = styled.div`
   margin-top: -32px;
 `
 
+const TabGroupStyled = styled(TabGroup)`
+  background: #f6f6f9;
+`
+
+const Popover = styled.div`
+  position: absolute; 
+  z-index: 999; 
+  width: 500px; 
+  height: 400px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #e8e8e8;
+  top: 80px;
+  left: 68px;
+  box-shadow: 0 1px 6px #d4d4d4;
+`
+
+const NavLinkStyled = styled(NavLink)`
+  background: #fff !important;
+`
+
 const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }) => {
   const buttonRef = useRef();
   const [userLinksVisible, setUserLinksVisible] = useState(false);
@@ -73,6 +97,8 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
   const [isLoading, setIsLoading] = useState(true);
   const [permissaoMenu, setPermissaoMenu] = useState([]);
   const [plugins, setPlugins] = useState([]);
+  const [visible, setVisible] = useState(false);
+
   const { useEffect } = require('react');
   const { LoadingIndicatorPage, request, useNotification } = require('@strapi/helper-plugin');
   const toggleNotification = useNotification();
@@ -179,9 +205,7 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
   if (isLoading) {
     return <LoadingIndicatorPage />;
   }
-
-
-  // const hasData = permissaoMenu.filter(item => item.tipo === 'tabela' && item.listar === true && !item.aba)
+  
   const hasPermissionUsers = permissaoMenu.filter(item => item.menu === 'Usuários' && item.listar === true)
   const hasPermission = permissaoMenu.filter(item => item.menu === 'Permissões' && item.listar === true)
 
@@ -195,129 +219,197 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
     }
   });
 
+  const handleClick = (e) => {
+    e.preventDefault()
+    setVisible(s => !s)
+  }
+
+  const hasNot = filteredPluginsSectionLinks.find(item => item.to === '/plugins/notificacoes')
+  const IconBell = <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" font-size="5" class="sc-gsDKAQ sc-jrQzAO idGwtb inHzHV"><path d="M22 20H2v-2h1v-6.969C3 6.043 7.03 2 12 2s9 4.043 9 9.031V18h1v2zM9.5 21h5a2.5 2.5 0 01-5 0z" fill="#212134"></path></svg>
+
   return (
-    <MainNav condensed={condensed}>
-      <NavBrand
-        workplace={formatMessage({
-          id: 'app.components.LeftMenu.navbrand.workplace',
-          defaultMessage: 'Workplace',
-        })}
-        title={menuTitle}
-        icon={<img src={menuLogo} alt={menuTitle} />}
-      />
+    <div>
+      {visible && 
+        <Popover id="notification">
+          <TabGroupStyled
+            label="Some stuff for the label" 
+            id="tabs" 
+            onTabChange={selected => console.log(selected)}
+          >
+            <Tabs>
+              <Tab>Abertas</Tab>
+              <Tab>Concluídas</Tab>
+              <Tab>Todas</Tab>
+            </Tabs>
+            <TabPanels>
+              <TabPanel>
+                <Box color="neutral800" padding={4} background="neutral0">
+                  First panel
+                </Box>
+              </TabPanel>
+              <TabPanel>
+                <Box color="neutral800" padding={4} background="neutral0">
+                  Second panel
+                </Box>
+              </TabPanel>
+              <TabPanel>
+                <Box color="neutral800" padding={4} background="neutral0">
+                  Third panel
+                </Box>
+              </TabPanel>
+              <TabPanel>
+                <Box color="neutral800" padding={4} background="neutral0">
+                  Todas
+                </Box>
+              </TabPanel>
+            </TabPanels>
+          </TabGroupStyled>
+        </Popover>
+      }
+      <MainNav condensed={condensed}>
+        
+        <NavBrand
+          workplace={formatMessage({
+            id: 'app.components.LeftMenu.navbrand.workplace',
+            defaultMessage: 'Workplace',
+          })}
+          title={menuTitle}
+          icon={<img src={menuLogo} alt={menuTitle} />}
+        />
 
-      <Divider />
-      <Container>
-        <NavSections id="navsections">
+        <Divider />
+        <Container>
+          <NavSections id="navsections">
+            {
+              hasNot && (
+                <NavLinkStyled 
+                  badgeContent={3}
+                  to=''
+                  key={hasNot.to} 
+                  icon={IconBell}
+                  onClick={handleClick}
+                  id="link-notification"
+                >
+                  Notificações
+                </NavLinkStyled>
+              )
+            }
 
-          {collectionTypeLinksFiltered.length > 0 ? (
-            <NavLink to="/content-manager" icon={<Write/>}>
-              {formatMessage({id: 'content-manager.plugin.name', defaultMessage: 'Content manager'})}
-            </NavLink>
-          ) : <ContainerDiv />}
+            {collectionTypeLinksFiltered.length > 0 ? (
+              <NavLink to="/content-manager" icon={<Write/>}>
+                {formatMessage({id: 'content-manager.plugin.name', defaultMessage: 'Content manager'})}
+              </NavLink>
+            ) : <ContainerDiv />}
 
 
-          {filteredPluginsSectionLinks.length > 0 ? (
-          <NavSection label="Plugins">
-            {filteredPluginsSectionLinks.map(link => {
-              const Icon = link.icon;
-              const hasAbas = permissaoMenu.filter(item => (item.menu === link.intlLabel.defaultMessage) && item.aba)
+            {filteredPluginsSectionLinks.length > 0 ? (
+            <NavSection label="Plugins">
+              {filteredPluginsSectionLinks.map(link => {
+                const Icon = link.icon;
+                const hasAbas = permissaoMenu.filter(item => (item.menu === link.intlLabel.defaultMessage) && item.aba)
 
-              if(hasAbas.length) {
-                const canList = hasAbas.filter(item => item.listar)
-                if (!canList.length) return null
-              }
-              return (
-                <NavLink to={link.to} key={link.to} icon={<Icon />}>
-                  {formatMessage(link.intlLabel)}
-                </NavLink>
-              );
-            })}
-          </NavSection>
-        ) : null}
+                if(hasAbas.length) {
+                  const canList = hasAbas.filter(item => item.listar)
+                  if (!canList.length) return null
+                }
 
-        {(hasPermissionUsers.length || hasPermission.length) ? (
-          <NavSection label="Controle de acesso">
-            {hasPermissionUsers.length ? <NavLink to="/settings/users" icon={<Users/>}>Usuários</NavLink>  : null}
-            {hasPermission.length ? <NavLink to="/plugins/permissoes" icon={<Lock/>}>Permissões</NavLink>  : null}
-          </NavSection>
-        ) : null}
-          {filteredGeneralSectionLinks.length > 0 ? (
-            <NavSection label="General">
-              {filteredGeneralSectionLinks.map(link => {
-                const LinkIcon = link.icon;
+                if (link.to === '/plugins/notificacoes') {
+                  return null
+                }
 
                 return (
-                  <NavLink
-                    badgeContent={
-                      (link.notificationsCount > 0 && link.notificationsCount.toString()) || undefined
-                    }
-                    to={link.to}
-                    key={link.to}
-                    icon={<LinkIcon />}
-                  >
+                  <NavLink to={link.to} key={link.to} icon={<Icon />}>
                     {formatMessage(link.intlLabel)}
                   </NavLink>
                 );
               })}
             </NavSection>
-            ) : null}
-        </NavSections>
-      </Container>
-      <NavUser
-        id="main-nav-user-button"
-        ref={buttonRef}
-        onClick={handleToggleUserLinks}
-        initials={initials}
-        style={{ background: 'white' }}
-      >
-        {userDisplayName}
-      </NavUser>
-      {userLinksVisible && (
-        <LinkUserWrapper
-          onBlur={handleBlur}
-          padding={1}
-          shadow="tableShadow"
-          background="neutral0"
-          hasRadius
+          ) : null}
+
+
+          {(hasPermissionUsers.length || hasPermission.length) ? (
+            <NavSection label="Controle de acesso">
+              {hasPermissionUsers.length ? <NavLink to="/settings/users" icon={<Users/>}>Usuários</NavLink>  : null}
+              {hasPermission.length ? <NavLink to="/plugins/permissoes" icon={<Lock/>}>Permissões</NavLink>  : null}
+            </NavSection>
+          ) : null}
+            {filteredGeneralSectionLinks.length > 0 ? (
+              <NavSection label="General">
+                {filteredGeneralSectionLinks.map(link => {
+                  const LinkIcon = link.icon;
+
+                  return (
+                    <NavLink
+                      badgeContent={
+                        (link.notificationsCount > 0 && link.notificationsCount.toString()) || undefined
+                      }
+                      to={link.to}
+                      key={link.to}
+                      icon={<LinkIcon />}
+                    >
+                      {formatMessage(link.intlLabel)}
+                    </NavLink>
+                  );
+                })}
+              </NavSection>
+              ) : null}
+          </NavSections>
+        </Container>
+        <NavUser
+          id="main-nav-user-button"
+          ref={buttonRef}
+          onClick={handleToggleUserLinks}
+          initials={initials}
           style={{ background: 'white' }}
         >
-          <FocusTrap onEscape={handleToggleUserLinks}>
-            <Stack size={0}>
-              <LinkUser tabIndex={0} onClick={handleToggleUserLinks} to="/me">
-                <Typography>
-                  {formatMessage({
-                    id: 'app.components.LeftMenu.profile',
-                    defaultMessage: 'Profile',
-                  })}
-                </Typography>
-              </LinkUser>
-              <LinkUser tabIndex={0} onClick={handleLogout} logout="logout" to="/auth/login">
-                <Typography textColor="danger600">
-                  {formatMessage({
-                    id: 'app.components.LeftMenu.logout',
-                    defaultMessage: 'Logout',
-                  })}
-                </Typography>
-                <Exit />
-              </LinkUser>
-            </Stack>
-          </FocusTrap>
-        </LinkUserWrapper>
-      )}
+          {userDisplayName}
+        </NavUser>
+        {userLinksVisible && (
+          <LinkUserWrapper
+            onBlur={handleBlur}
+            padding={1}
+            shadow="tableShadow"
+            background="neutral0"
+            hasRadius
+            style={{ background: 'white' }}
+          >
+            <FocusTrap onEscape={handleToggleUserLinks}>
+              <Stack size={0}>
+                <LinkUser tabIndex={0} onClick={handleToggleUserLinks} to="/me">
+                  <Typography>
+                    {formatMessage({
+                      id: 'app.components.LeftMenu.profile',
+                      defaultMessage: 'Profile',
+                    })}
+                  </Typography>
+                </LinkUser>
+                <LinkUser tabIndex={0} onClick={handleLogout} logout="logout" to="/auth/login">
+                  <Typography textColor="danger600">
+                    {formatMessage({
+                      id: 'app.components.LeftMenu.logout',
+                      defaultMessage: 'Logout',
+                    })}
+                  </Typography>
+                  <Exit />
+                </LinkUser>
+              </Stack>
+            </FocusTrap>
+          </LinkUserWrapper>
+        )}
 
-      <NavCondense onClick={() => {setCondensed(s => !s); setMenuCondensed(s => !s)}}>
-        {condensed
-          ? formatMessage({
-              id: 'app.components.LeftMenu.expand',
-              defaultMessage: 'Expand the navbar',
-            })
-          : formatMessage({
-              id: 'app.components.LeftMenu.collapse',
-              defaultMessage: 'Collapse the navbar',
-            })}
-      </NavCondense>
-    </MainNav>
+        <NavCondense onClick={() => {setCondensed(s => !s); setMenuCondensed(s => !s)}}>
+          {condensed
+            ? formatMessage({
+                id: 'app.components.LeftMenu.expand',
+                defaultMessage: 'Expand the navbar',
+              })
+            : formatMessage({
+                id: 'app.components.LeftMenu.collapse',
+                defaultMessage: 'Collapse the navbar',
+              })}
+        </NavCondense>
+      </MainNav>
+    </div>
   );
 };
 
