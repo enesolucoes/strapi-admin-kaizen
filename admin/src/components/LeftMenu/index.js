@@ -1,8 +1,6 @@
 import React, { useRef, useState } from 'react';
-import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import { useIntl } from 'react-intl';
-import { NavLink as Link } from 'react-router-dom';
 import { Divider } from '@strapi/design-system/Divider';
 import {
   MainNav,
@@ -14,7 +12,6 @@ import {
   NavCondense,
 } from '@strapi/design-system/MainNav';
 import { FocusTrap } from '@strapi/design-system/FocusTrap';
-import { Box } from '@strapi/design-system/Box';
 import { Typography } from '@strapi/design-system/Typography';
 import { Stack } from '@strapi/design-system/Stack';
 import Write from  '@strapi/icons/Write';
@@ -24,67 +21,14 @@ import Exit from '@strapi/icons/Exit';
 import { auth, usePersistentState, useAppInfos } from '@strapi/helper-plugin';
 import useConfigurations from '../../hooks/useConfigurations';
 import useModels from '../../content-manager/pages/App/useModels';
-
-
-import { Tabs, Tab, TabGroup, TabPanels, TabPanel } from '@strapi/design-system/Tabs';
-
-const LinkUserWrapper = styled(Box)`
-  width: 9.375rem;
-  position: absolute;
-  bottom: ({ theme }) => theme.spaces[9];
-  left: ({ theme }) => theme.spaces[5];
-`;
-
-const LinkUser = styled(Link)`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  text-decoration: none;
-  padding: ({ theme }) => theme.spaces[2] +' ' +theme.spaces[4];
-  border-radius: ({ theme }) => theme.spaces[1];
-
-  &:hover {
-    background: ({ theme, logout }) =>
-      logout ? theme.colors.danger100 : theme.colors.primary100;
-    text-decoration: none;
-  }
-
-  svg {
-    path {
-      fill: ({ theme }) => theme.colors.danger600;
-    }
-  }
-`;
-
-const Container = styled.div`
-  overflow: auto;
-  height: calc(100% - 126px);
-`
-
-const ContainerDiv = styled.div`
-  margin-top: -32px;
-`
-
-const TabGroupStyled = styled(TabGroup)`
-  background: #f6f6f9;
-`
-
-const Popover = styled.div`
-  position: absolute; 
-  z-index: 999; 
-  width: 500px; 
-  height: 400px;
-  background: white;
-  border-radius: 4px;
-  border: 1px solid #e8e8e8;
-  top: 80px;
-  left: 68px;
-  box-shadow: 0 1px 6px #d4d4d4;
-`
-
-const NavLinkStyled = styled(NavLink)`
-  background: #fff !important;
-`
+import PopoverNotifications from './PopoverNotifications'
+import {
+  LinkUserWrapper, 
+  LinkUser, 
+  Container, 
+  ContainerDiv,
+  NavLinkStyled
+} from './styled'
 
 const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }) => {
   const buttonRef = useRef();
@@ -230,41 +174,7 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
   return (
     <div>
       {visible && 
-        <Popover id="notification">
-          <TabGroupStyled
-            label="Some stuff for the label" 
-            id="tabs" 
-            onTabChange={selected => console.log(selected)}
-          >
-            <Tabs>
-              <Tab>Abertas</Tab>
-              <Tab>Concluídas</Tab>
-              <Tab>Todas</Tab>
-            </Tabs>
-            <TabPanels>
-              <TabPanel>
-                <Box color="neutral800" padding={4} background="neutral0">
-                  First panel
-                </Box>
-              </TabPanel>
-              <TabPanel>
-                <Box color="neutral800" padding={4} background="neutral0">
-                  Second panel
-                </Box>
-              </TabPanel>
-              <TabPanel>
-                <Box color="neutral800" padding={4} background="neutral0">
-                  Third panel
-                </Box>
-              </TabPanel>
-              <TabPanel>
-                <Box color="neutral800" padding={4} background="neutral0">
-                  Todas
-                </Box>
-              </TabPanel>
-            </TabPanels>
-          </TabGroupStyled>
-        </Popover>
+        <PopoverNotifications />
       }
       <MainNav condensed={condensed}>
         
