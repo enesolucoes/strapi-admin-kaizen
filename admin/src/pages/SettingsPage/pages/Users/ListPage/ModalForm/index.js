@@ -14,7 +14,7 @@ import { Button } from '@strapi/design-system/Button';
 import { Stack } from '@strapi/design-system/Stack';
 import { Typography } from '@strapi/design-system/Typography';
 import { Checkbox } from '@strapi/design-system/Checkbox';
-
+import styled from 'styled-components';
 import { Formik } from 'formik';
 import { Form, GenericInput, useNotification, useOverlayBlocker, LoadingIndicatorPage, translatedErrors } from '@strapi/helper-plugin';
 import { useQueryClient, useMutation } from 'react-query';
@@ -26,7 +26,7 @@ import layout from './utils/layout';
 import stepper from './utils/stepper';
 import * as yup from 'yup';
 
-import { fetchPermissions, postUserPermission, fetchFactories, fetchFronts} from '../../EditPage/utils/api';
+import { fetchPermissions, postUserPermission, fetchFactories, fetchFronts, fetchUserPermission} from '../../EditPage/utils/api';
 import { useQuery } from 'react-query';
 import { Select, Option } from '@strapi/design-system/Select';
 import omit from 'lodash/omit';
@@ -39,6 +39,13 @@ const schema = yup.object().shape({
     .email(translatedErrors.email)
     .required(translatedErrors.required),
 });
+
+const ModalLayoutStyled = styled(ModalLayout)`
+    @media only screen and (max-width: 47.9375rem) {
+      width: 100%;
+      height: 100%;
+    }
+`;
 
 const ModalForm = ({ queryName, onToggle }) => {
   const [currentStep, setStep] = useState('create');
@@ -54,7 +61,6 @@ const ModalForm = ({ queryName, onToggle }) => {
 
   const listPermissions = useQuery(['permissao'], () => fetchPermissions())
   const getFactories = useQuery(['usinas'], () => fetchFactories())
-
   const getFronts = useQuery(['fronts'], () => fetchFronts())
 
   const postMutation = useMutation(body => axiosInstance.post('/admin/users',  omit(body, 'permission')), {
@@ -161,21 +167,19 @@ const ModalForm = ({ queryName, onToggle }) => {
     );
 
   let permissionMaster = null
-  const {id} = JSON.parse(sessionStorage.getItem('userInfo') || {});
+  let id_permissao = null
 
-  if(listPermissions && listPermissions.length) {
-
-    let id_permissao = null
-
+  if(listPermissions && listPermissions?.data?.length) {
+    const {id} = JSON.parse(sessionStorage.getItem('userInfo') || {});
     fetchUserPermission(id).then((res) => {
       id_permissao = res[0]?.id_permissao
     });
 
-    permissionMaster = listPermissions.find(item => item.Nome.toLowerCase() === 'masterdk');
+    permissionMaster = listPermissions?.data.find(item => item.Nome.toLowerCase() === 'masterdk');
   }
 
   return (
-    <ModalLayout onClose={onToggle} labelledBy="title">
+    <ModalLayoutStyled onClose={onToggle} labelledBy="title">
       <ModalHeader>
         <Breadcrumbs label={headerTitle}>
           <Crumb>{headerTitle}</Crumb>
@@ -260,7 +264,7 @@ const ModalForm = ({ queryName, onToggle }) => {
                           {
                             listPermissions.data.map(item => {
                               if(item.Nome.toLowerCase() === 'masterdk') {
-                                if(permissionMaster && permissionMaster.id === permission)
+                                if(permissionMaster && (permissionMaster.id === permission))
                                   return (
                                     <Option value={item.id}>{item.Nome}</Option>
                                   )
@@ -365,7 +369,7 @@ const ModalForm = ({ queryName, onToggle }) => {
           );
         }}
       </Formik>
-    </ModalLayout>
+    </ModalLayoutStyled>
   );
 };
 
