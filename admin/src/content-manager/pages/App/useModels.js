@@ -83,7 +83,6 @@ const useModels = () => {
 
     return () => {
       source.cancel('Operation canceled by the user.');
-      dispatch(resetProps());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, toggleNotification]);
