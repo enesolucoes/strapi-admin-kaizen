@@ -54,7 +54,8 @@ const LeftMenu = () => {
 
         const permissionDetail = await request('/content-manager/collection-types/api::permissao.permissao?page=1&pageSize=1000&sort=id:ASC&filters[$and][0][id][$eq]='+id_permissao, { method: 'GET' });
 
-        const permissionMaster = permissionDetail[0].Nome.toLowerCase() === 'masterdk';
+        const permissionMaster = permissionDetail.results[0].Nome.toLowerCase() === 'masterdk';
+
         setIsMaster(permissionMaster);
 
       } catch (err) {
