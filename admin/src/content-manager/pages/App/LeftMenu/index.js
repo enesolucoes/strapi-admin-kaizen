@@ -30,6 +30,7 @@ const matchByTitle = (links, search) =>
 const LeftMenu = () => {
   const [search, setSearch] = useState('');
   const [permissaoMenu, setPermissaoMenu] = useState([])
+  const [isMaster, setIsMaster] = useState(false)
   const { formatMessage } = useIntl();
   const modelLinksSelector = useMemo(makeSelectModelLinks, []);
   const { collectionTypeLinks, singleTypeLinks } = useSelector(
@@ -38,8 +39,6 @@ const LeftMenu = () => {
   );
 
   useEffect(() => {
-
-
     const getData = async () => {
 
       const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || {});
@@ -52,6 +51,11 @@ const LeftMenu = () => {
         const permissao_menu = await request('/content-manager/collection-types/api::permissao-menu.permissao-menu?page=1&pageSize=1000&sort=menu:ASC&filters[$and][0][permissao][id][$eq]='+id_permissao, { method: 'GET' });
 
         setPermissaoMenu(permissao_menu.results)
+
+        const permissionDetail = await request('/content-manager/collection-types/api::permissao.permissao?page=1&pageSize=1000&sort=id:ASC&filters[$and][0][id][$eq]='+id_permissao, { method: 'GET' });
+
+        const permissionMaster = permissionDetail[0].Nome.toLowerCase() === 'masterdk';
+        setIsMaster(permissionMaster);
 
       } catch (err) {
         toggleNotification({
@@ -80,8 +84,22 @@ const LeftMenu = () => {
     sessionStorage.setItem('collectionLinksDados', JSON.stringify(sortBy(titleLinks, ['value'])));
   }
 
-  const omitMenus = [
-    'permissao', 'permissao-menu', 'usuario-permissao', 'tempos-bkp', 'equipamento-status-bkp'
+  const omitMenus = isMaster ? [] : [
+    'alocacao-van',
+    'caminhoes-r',
+    'chamado',
+    'historico-frente',
+    'integracao',
+    'notificacao',
+    'plugin-aba',
+    'quantidade-carga',
+    'tipo-equipamento',
+    'troca-de-turno',
+    'permissao', 
+    'permissao-menu', 
+    'usuario-permissao', 
+    'tempos-bkp', 
+    'equipamento-status-bkp'
   ]
 
   const collectionTypeLinksFiltered = collectionTypeLinks.filter((link) => {
