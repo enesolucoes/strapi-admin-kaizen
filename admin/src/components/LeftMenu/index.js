@@ -42,31 +42,44 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
   const [permissaoMenu, setPermissaoMenu] = useState([]);
   const [plugins, setPlugins] = useState([]);
   const [visible, setVisible] = useState(false);
+  const [hasNot, seHasNot] = useState(false);
+  const [collectionType, setCollectionType] = useState([]);
+  const [filteredGeneralSection, setFilteredGeneralSection] = useState([])
+  const [filteredPluginSection, setFilteredPluginSection] = useState([])
+  const [hasPermission, setHasPermission] = useState([])
+  const [hasPermissionUsers, setHasPermissionUsers] = useState([])
+  const [isMaster, setIsMaster]= useState(false)
 
   const { useEffect } = require('react');
   const { LoadingIndicatorPage, request, useNotification } = require('@strapi/helper-plugin');
   const toggleNotification = useNotification();
 
   const { collectionTypeLinks } = useModels();
+  useEffect(() => {
+    ( async () => {
+
+      let permission = permissaoMenu
+      if (collectionTypeLinks.length && !collectionType.length) {
+        if(!permissaoMenu.length) permission = await findPermission()
+        const collectionTypeLinksFiltered = await collectionTypeLinks.filter(async(link) => {
+          const linkName = link.name.split(".")
+
+          const findLink2 = permission && permission.find(item => item.menu === linkName[1]);
+          if(findLink2?.listar) return (findLink2)
+        });
+
+        setCollectionType(collectionTypeLinksFiltered)
+      }
+    }
+    )();
+  }, [collectionTypeLinks]);
 
   useEffect(() => {
 
     ( async () => {
         try {
           setCondensed(true)
-          const { email, id } = JSON.parse(sessionStorage.getItem('userInfo') || {});
-
-          const data2 = await request('/content-manager/collection-types/api::usuario-permissao.usuario-permissao/?filters[$and][0][id_usuario][$eq]=' + id, { method: 'GET' });
-          const result = data2.results[0]
-
-          // sessionStorage.setItem('usuario-permissao', JSON.stringify(result));
-
-          let data3 = null
-          if (result && result.id_permissao) {
-            data3 = await request('/content-manager/collection-types/api::permissao-menu.permissao-menu/?pageSize=1000&filters[$and][0][permissao][id][$eq]=' + result.id_permissao, { method: 'GET' });
-            setPermissaoMenu(data3.results)
-            // sessionStorage.setItem('permissaoMenu', JSON.stringify(data3.results));
-          }
+          const permissions = !permissaoMenu.length ? await findPermission() : permissaoMenu
 
           let listPlugins = JSON.parse(sessionStorage.getItem('pluginsSectionLinks') || []);
 
@@ -77,15 +90,14 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
 
           const pluginsPermitidos = []
           listPlugins.map(item => {
-            const itemsMenu = data3.results.filter(itemT => itemT.menu === item.intlLabel.defaultMessage)
+            const itemsMenu = permissions.filter(itemT => itemT.menu === item.intlLabel.defaultMessage)
             if(itemsMenu.length) {
               const itemFormatted = item.intlLabel.id.split('.')
               pluginsPermitidos.push(itemFormatted[0])
             }
           })
 
-
-          if (!result) {
+          if (!permissions) {
             toggleNotification({
               type: 'warning',
               lockTransition: true,
@@ -97,6 +109,20 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
           setPlugins(pluginsPermitidos)
 
 
+          const filteredPluginsSectionLinks = pluginsSectionLinks.filter(({to}) => pluginsPermitidos.includes(to.substring(9)));
+          setFilteredPluginSection(filteredPluginsSectionLinks)
+          
+          const filteredGeneralSectionLinks = menusUser.Configuracoes && menusUser.Configuracoes.Visualizar ? [generalSectionLinks[generalSectionLinks.length - 1]] : [];
+          setFilteredGeneralSection(filteredGeneralSectionLinks)
+          
+          const hasPermissionUsersPlugin = permissions.filter(item => item.menu === 'Usuários' && item.listar === true)
+          setHasPermissionUsers(hasPermissionUsersPlugin)
+
+          const hasPermissionPlugin = permissions.filter(item => item.menu === 'Permissões' && item.listar === true)
+          setHasPermission(hasPermissionPlugin)
+
+          const hasNotifications = filteredPluginsSectionLinks.find(item => item.to === '/plugins/notificacoes')
+          seHasNot(hasNotifications)
 
         } catch (err) {
             toggleNotification({
@@ -114,10 +140,28 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
     )();
   }, []);
 
-  const arrrayMenu = plugins;
+  const findPermission = async() => {
+    if(permissaoMenu.length) return null
+    const { id } = JSON.parse(sessionStorage.getItem('userInfo') || {});
 
-  const filteredPluginsSectionLinks = pluginsSectionLinks.filter(({to}) => arrrayMenu.includes(to.substring(9)));
-  const filteredGeneralSectionLinks = menusUser.Configuracoes && menusUser.Configuracoes.Visualizar ? [generalSectionLinks[generalSectionLinks.length - 1]] : [];
+    const userPermission = await request('/content-manager/collection-types/api::usuario-permissao.usuario-permissao/?filters[$and][0][id_usuario][$eq]=' + id, { method: 'GET' });
+    const result = userPermission.results[0]
+
+    if (result && result.id_permissao) {
+      const { results }  = await request('/content-manager/collection-types/api::permissao-menu.permissao-menu/?pageSize=1000&filters[$and][0][permissao][id][$eq]=' + result.id_permissao, { method: 'GET' });
+      setPermissaoMenu(results)
+
+      const permissionDetail = await request('/content-manager/collection-types/api::permissao.permissao?page=1&pageSize=1&sort=id:ASC&filters[$and][0][id][$eq]='+result.id_permissao, { method: 'GET' });
+
+      const permissionMaster = permissionDetail.results[0].Nome.toLowerCase() === 'masterdk';
+
+      setIsMaster(permissionMaster)
+
+      return results
+    }
+    return null
+  }
+ 
 
   const initials = userDisplayName
     .split(' ')
@@ -146,31 +190,17 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
     defaultMessage: 'Strapi Dashboard',
   });
 
+  const IconBell = <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" font-size="5" class="sc-gsDKAQ sc-jrQzAO idGwtb inHzHV"><path d="M22 20H2v-2h1v-6.969C3 6.043 7.03 2 12 2s9 4.043 9 9.031V18h1v2zM9.5 21h5a2.5 2.5 0 01-5 0z" fill="#212134"></path></svg>
+
   if (isLoading) {
     return <LoadingIndicatorPage />;
   }
-  
-  const hasPermissionUsers = permissaoMenu.filter(item => item.menu === 'Usuários' && item.listar === true)
-  const hasPermission = permissaoMenu.filter(item => item.menu === 'Permissões' && item.listar === true)
-
-  const collectionTypeLinksFiltered = collectionTypeLinks.filter((link) => {
-    const linkName = link.name.split(".")
-
-    const findLink2 = permissaoMenu && permissaoMenu.find(item => item.menu === linkName[1]);
-
-    if(findLink2 && (findLink2.listar)) {
-      return (findLink2)
-    }
-  });
 
   const handleClick = (e) => {
     e.preventDefault()
     setVisible(s => !s)
   }
-
-  const hasNot = filteredPluginsSectionLinks.find(item => item.to === '/plugins/notificacoes')
-  const IconBell = <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" font-size="5" class="sc-gsDKAQ sc-jrQzAO idGwtb inHzHV"><path d="M22 20H2v-2h1v-6.969C3 6.043 7.03 2 12 2s9 4.043 9 9.031V18h1v2zM9.5 21h5a2.5 2.5 0 01-5 0z" fill="#212134"></path></svg>
-
+  
   return (
     <div>
       {visible && 
@@ -205,26 +235,26 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
               )
             }
 
-            {collectionTypeLinksFiltered.length > 0 ? (
+            {(collectionType.length > 0) ? (
               <NavLink to="/content-manager" icon={<Write/>}>
                 {formatMessage({id: 'content-manager.plugin.name', defaultMessage: 'Content manager'})}
               </NavLink>
             ) : <ContainerDiv />}
 
 
-            {filteredPluginsSectionLinks.length > 0 ? (
+            {filteredPluginSection.length > 0 ? (
             <NavSection label="Plugins">
-              {filteredPluginsSectionLinks.map(link => {
+              {filteredPluginSection.map(link => {
+                if (link.to === '/plugins/notificacoes' || (link.to === '/plugins/content-type-builder' && !isMaster)) {
+                  return null
+                }
+
                 const Icon = link.icon;
                 const hasAbas = permissaoMenu.filter(item => (item.menu === link.intlLabel.defaultMessage) && item.aba)
 
                 if(hasAbas.length) {
                   const canList = hasAbas.filter(item => item.listar)
                   if (!canList.length) return null
-                }
-
-                if (link.to === '/plugins/notificacoes') {
-                  return null
                 }
 
                 return (
@@ -243,9 +273,9 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
               {hasPermission.length ? <NavLink to="/plugins/permissoes" icon={<Lock/>}>Permissões</NavLink>  : null}
             </NavSection>
           ) : null}
-            {filteredGeneralSectionLinks.length > 0 ? (
+            {filteredGeneralSection.length > 0 ? (
               <NavSection label="General">
-                {filteredGeneralSectionLinks.map(link => {
+                {filteredGeneralSection.map(link => {
                   const LinkIcon = link.icon;
 
                   return (
