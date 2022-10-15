@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
 import {
   DynamicTable,
   SearchURLQuery,
@@ -7,6 +8,7 @@ import {
   useNotification,
   useFocusWhenNavigate,
   NoPermissions,
+  request
 } from '@strapi/helper-plugin';
 import { ActionLayout, HeaderLayout } from '@strapi/design-system/Layout';
 import { Button } from '@strapi/design-system/Button';
@@ -25,9 +27,21 @@ import { deleteData, fetchData, fetchDataPermission, fetchDataUsersPermission } 
 import displayedFilters from './utils/displayedFilters';
 import tableHeaders from './utils/tableHeaders';
 import { Box } from '@strapi/design-system/Box';
+import { Loader } from '@strapi/design-system/Loader';
+
+const ContainerLoader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh
+`
 
 const ListPage = () => {
   const [isModalOpened, setIsModalOpen] = useState(false);
+  const [permissionsUsers, setPermissionsUsers] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [isMaster, setIsMaster] = useState(false);
+
   const {
     allowedActions: { canCreate, canDelete, canRead },
   } = useRBAC(adminPermissions.settings.users);
@@ -58,6 +72,41 @@ const ListPage = () => {
     );
   };
 
+  useEffect(() => {
+
+    ( async () => {
+      try {
+        setLoading(true)
+        await findPermission();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false)
+      }
+    }
+    )();
+  }, []);
+
+  const findPermission = async() => {
+     if(permissionsUsers?.id) return null
+     const { id } = JSON.parse(sessionStorage.getItem('userInfo') || {});
+ 
+     const userPermission = await request('/content-manager/collection-types/api::usuario-permissao.usuario-permissao/?filters[$and][0][id_usuario][$eq]=' + id, { method: 'GET' });
+     const result = userPermission.results[0]
+ 
+     if (result && result.id_permissao) {
+       const { results }  = await request('/content-manager/collection-types/api::permissao-menu.permissao-menu/?pageSize=1000&filters[$and][0][permissao][id][$eq]=' + result.id_permissao, { method: 'GET' });
+
+       const findPermissionUsers = results.find(item => item.menu === 'Usuários')
+       setPermissionsUsers(findPermissionUsers)
+ 
+       const permissionDetail = await request('/content-manager/collection-types/api::permissao.permissao?page=1&pageSize=1&sort=id:ASC&filters[$and][0][id][$eq]='+result.id_permissao, { method: 'GET' });
+ 
+       const permissionMaster = permissionDetail.results[0].Nome.toLowerCase() === 'masterdk';
+       setIsMaster(permissionMaster)
+     }
+   }
+
   const { status, data, isFetching } = useQuery(queryName, () => fetchData(search, notifyLoad), {
     enabled: canRead,
     keepPreviousData: true,
@@ -70,7 +119,6 @@ const ListPage = () => {
       });
     },
   });
-
 
   const allPermissions = useQuery(queryName2, () => fetchDataPermission(), {
     enabled: canRead,
@@ -107,15 +155,10 @@ const ListPage = () => {
   let newData = [];
 
   if (data?.results.length && allPermissions?.data?.length && userPermissions?.data?.length && (idPermissionMaster)) {
-
-    const {id} = JSON.parse(sessionStorage.getItem('userInfo') || {});
-    const permissionUserLogged = userPermissions?.data?.find(item => item.id_usuario === id);
-    const loggedIsMaster = permissionUserLogged.id_permissao === idPermissionMaster.id
-
     newData = data?.results.filter(item => {
       const filterPermissionUsers = userPermissions?.data?.find(itemP => itemP.id_usuario === item.id)
       if (!filterPermissionUsers) return item
-      if(!loggedIsMaster && (filterPermissionUsers.id_permissao === idPermissionMaster.id)) return null
+      if(!isMaster && (filterPermissionUsers.id_permissao === idPermissionMaster.id)) return null
       return item
     })
   }
@@ -144,7 +187,15 @@ const ListPage = () => {
   const isLoading =
     (status !== 'success' && status !== 'error') || (status === 'success' && isFetching);
 
-  const createAction = canCreate ? (
+
+  if(loading) 
+    return (
+      <ContainerLoader>
+        <Loader>loading</Loader>
+      </ContainerLoader>
+    )
+
+  const createAction = permissionsUsers?.criar ? (
     <Button
       data-testid="create-user-button"
       onClick={handleToggle}
@@ -171,7 +222,7 @@ const ListPage = () => {
           defaultMessage: 'All the users who have access to the Strapi admin panel',
         })}
       />
-      {canRead && (
+      {permissionsUsers?.listar && (
         <ActionLayout
           startActions={
             <>
@@ -188,9 +239,9 @@ const ListPage = () => {
       )}
 
       <Box paddingLeft={[10, 5, 1]} paddingRight={[10, 5, 1]}>
-        {!canRead && <NoPermissions />}
+        {!permissionsUsers?.listar && <NoPermissions />}
         {status === 'error' && <div>TODO: An error occurred</div>}
-        {canRead && (
+        {permissionsUsers?.listar && (
           <>
             <DynamicTable
               contentType="Users"
@@ -200,14 +251,14 @@ const ListPage = () => {
               headers={tableHeaders}
               rows={newData}
               withBulkActions
-              withMainAction={canDelete}
+              withMainAction={permissionsUsers?.excluir}
             >
               <TableRows
-                canDelete={canDelete}
+                canDelete={permissionsUsers?.excluir}
                 headers={tableHeaders}
                 rows={newData || []}
                 withBulkActions
-                withMainAction={canDelete}
+                withMainAction={permissionsUsers?.excluir}
               />
             </DynamicTable>
             <PaginationFooter pagination={data?.pagination} />

@@ -21,7 +21,7 @@ const TableRows = ({
   onSelectRow,
   withMainAction,
   withBulkActions,
-  rows,
+  rows
 }) => {
   const {
     push,
