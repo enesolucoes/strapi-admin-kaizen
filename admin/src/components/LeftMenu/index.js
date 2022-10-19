@@ -91,7 +91,7 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
           const pluginsPermitidos = []
           listPlugins.map(item => {
             const itemsMenu = permissions.filter(itemT => itemT.menu === item.intlLabel.defaultMessage)
-            if(itemsMenu.length) {
+            if(itemsMenu.length || item.to === '/plugins/chamados') {
               const itemFormatted = item.intlLabel.id.split('.')
               pluginsPermitidos.push(itemFormatted[0])
             }
@@ -112,7 +112,7 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
           const filteredPluginsSectionLinks = pluginsSectionLinks.filter(({to}) => pluginsPermitidos.includes(to.substring(9)));
           setFilteredPluginSection(filteredPluginsSectionLinks)
           
-          const filteredGeneralSectionLinks = menusUser.Configuracoes && menusUser.Configuracoes.Visualizar ? [generalSectionLinks[generalSectionLinks.length - 1]] : [];
+          const filteredGeneralSectionLinks = isMaster ? [generalSectionLinks[generalSectionLinks.length - 1]] : [];
           setFilteredGeneralSection(filteredGeneralSectionLinks)
           
           const hasPermissionUsersPlugin = permissions.filter(item => item.menu === 'Usuários' && item.listar === true)
@@ -200,7 +200,16 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
     e.preventDefault()
     setVisible(s => !s)
   }
-  
+
+  const collectionTypeLinksFiltered = collectionType.filter((link) => {
+    const linkName = link.name.split(".")
+    const findLink2 = permissaoMenu && permissaoMenu.find(item => item.menu === linkName[1]);
+
+    if(findLink2 && (findLink2.listar)) {
+      return (findLink2)
+    }
+  });
+
   return (
     <div>
       {visible && 
@@ -235,7 +244,7 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
               )
             }
 
-            {(collectionType.length > 0) ? (
+            {(collectionTypeLinksFiltered.length > 0) ? (
               <NavLink to="/content-manager" icon={<Write/>}>
                 {formatMessage({id: 'content-manager.plugin.name', defaultMessage: 'Content manager'})}
               </NavLink>
@@ -245,6 +254,7 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
             {filteredPluginSection.length > 0 ? (
             <NavSection label="Plugins">
               {filteredPluginSection.map(link => {
+
                 if (link.to === '/plugins/notificacoes' || (link.to === '/plugins/content-type-builder' && !isMaster)) {
                   return null
                 }
@@ -273,28 +283,30 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
               {hasPermission.length ? <NavLink to="/plugins/permissoes" icon={<Lock/>}>Permissões</NavLink>  : null}
             </NavSection>
           ) : null}
-            {filteredGeneralSection.length > 0 ? (
-              <NavSection label="General">
-                {filteredGeneralSection.map(link => {
-                  const LinkIcon = link.icon;
 
-                  return (
-                    <NavLink
-                      badgeContent={
-                        (link.notificationsCount > 0 && link.notificationsCount.toString()) || undefined
-                      }
-                      to={link.to}
-                      key={link.to}
-                      icon={<LinkIcon />}
-                    >
-                      {formatMessage(link.intlLabel)}
-                    </NavLink>
-                  );
-                })}
-              </NavSection>
-              ) : null}
+          {filteredGeneralSection.length > 0 ? (
+            <NavSection label="General">
+              {filteredGeneralSection.map(link => {
+                const LinkIcon = link.icon;
+
+                return (
+                  <NavLink
+                    badgeContent={
+                      (link.notificationsCount > 0 && link.notificationsCount.toString()) || undefined
+                    }
+                    to={link.to}
+                    key={link.to}
+                    icon={<LinkIcon />}
+                  >
+                    {formatMessage(link.intlLabel)}
+                  </NavLink>
+                );
+              })}
+            </NavSection>
+          ) : null}
           </NavSections>
         </Container>
+
         <NavUser
           id="main-nav-user-button"
           ref={buttonRef}
