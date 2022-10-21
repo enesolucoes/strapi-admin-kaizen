@@ -216,15 +216,14 @@ const ListSettingsView = ({ layout, slug }) => {
               { name: upperFirst(modifiedData.info.displayName) }
             )}
           />
-          <ContentLayout>
             <Box
               background="neutral0"
               hasRadius
               shadow="tableShadow"
               paddingTop={6}
               paddingBottom={6}
-              paddingLeft={7}
-              paddingRight={7}
+              paddingLeft={[6, 5, 1]}
+              paddingRight={[6, 5, 1]}
             >
               <Settings
                 modifiedData={modifiedData}
@@ -244,7 +243,6 @@ const ListSettingsView = ({ layout, slug }) => {
                 metadatas={modifiedData.metadatas}
               />
             </Box>
-          </ContentLayout>
           <ConfirmDialog
             bodyText={{
               id: getTrad('popUpWarning.warning.updateAllSettings'),

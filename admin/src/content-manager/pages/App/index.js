@@ -21,6 +21,15 @@ import useModels from './useModels';
 const cmPermissions = permissions.contentManager;
 
 const App = () => {
+  const [mediaQuery, setMQuery] = React.useState({matches: window.innerWidth > 768});
+  const [hiddenContentManager, setHiddenContentManager] = React.useState(false);
+
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+    mediaQuery.addListener(setMQuery);
+    return () => mediaQuery.removeListener(setMQuery);
+  }, []);
+
   const contentTypeMatch = useRouteMatch(`/content-manager/:kind/:uid`);
   const { status, collectionTypeLinks, singleTypeLinks, models, refetchData } = useModels();
   const authorisedModels = sortBy([...collectionTypeLinks, ...singleTypeLinks], model =>
@@ -70,10 +79,14 @@ const App = () => {
     );
   }
 
+  const handleToggleAsideBar = () => setHiddenContentManager(!hiddenContentManager);
+
+  const isNotCurrentMobile = (mediaQuery && mediaQuery.matches);
+
   return (
-    <Layout sideNav={<LeftMenu />}>
+    <Layout sideNav={isNotCurrentMobile || hiddenContentManager ? <LeftMenu/> : null}>
       <DragLayer />
-      <ModelsContext.Provider value={{ refetchData }}>
+      <ModelsContext.Provider value={{ refetchData, handleToggleAsideBar, hiddenContentManager, isCurrentMobile: !isNotCurrentMobile }}>
         <Switch>
           <Route path="/content-manager/components/:uid/configurations/edit">
             <CheckPagePermissions permissions={cmPermissions.componentsConfigurations}>
@@ -113,3 +126,4 @@ export default () => {
     </>
   );
 };
+

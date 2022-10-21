@@ -23,9 +23,9 @@ import useConfigurations from '../../hooks/useConfigurations';
 import useModels from '../../content-manager/pages/App/useModels';
 import PopoverNotifications from './PopoverNotifications'
 import {
-  LinkUserWrapper, 
-  LinkUser, 
-  Container, 
+  LinkUserWrapper,
+  LinkUser,
+  Container,
   ContainerDiv,
   NavLinkStyled
 } from './styled'
@@ -111,10 +111,10 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
 
           const filteredPluginsSectionLinks = pluginsSectionLinks.filter(({to}) => pluginsPermitidos.includes(to.substring(9)));
           setFilteredPluginSection(filteredPluginsSectionLinks)
-          
+
           const filteredGeneralSectionLinks = isMaster ? [generalSectionLinks[generalSectionLinks.length - 1]] : [];
           setFilteredGeneralSection(filteredGeneralSectionLinks)
-          
+
           const hasPermissionUsersPlugin = permissions.filter(item => item.menu === 'Usuários' && item.listar === true)
           setHasPermissionUsers(hasPermissionUsersPlugin)
 
@@ -161,7 +161,7 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
     }
     return null
   }
- 
+
 
   const initials = userDisplayName
     .split(' ')
@@ -212,11 +212,11 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
 
   return (
     <div>
-      {visible && 
+      {visible &&
         <PopoverNotifications />
       }
       <MainNav condensed={condensed}>
-        
+
         <NavBrand
           workplace={formatMessage({
             id: 'app.components.LeftMenu.navbrand.workplace',
@@ -231,10 +231,10 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
           <NavSections id="navsections">
             {
               hasNot && (
-                <NavLinkStyled 
+                <NavLinkStyled
                   badgeContent={3}
                   to=''
-                  key={hasNot.to} 
+                  key={hasNot.to}
                   icon={IconBell}
                   onClick={handleClick}
                   id="link-notification"
