@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import { connect } from 'react-redux';
@@ -20,7 +20,8 @@ import {
 import { IconButton } from '@strapi/design-system/IconButton';
 import { Main } from '@strapi/design-system/Main';
 import { Box } from '@strapi/design-system/Box';
-import { ActionLayout, ContentLayout, HeaderLayout } from '@strapi/design-system/Layout';
+import { Flex } from '@strapi/design-system/Flex';
+import { HeaderLayout } from '@strapi/design-system/Layout';
 import { useNotifyAT } from '@strapi/design-system/LiveRegions';
 import { Button } from '@strapi/design-system/Button';
 import { Link } from '@strapi/design-system/Link';
@@ -38,7 +39,11 @@ import PaginationFooter from './PaginationFooter';
 import { getData, getDataSucceeded, onChangeListHeaders, onResetListHeaders } from './actions';
 import makeSelectListView from './selectors';
 import { buildQueryString } from './utils';
-import AttributeFilter from '../../components/AttributeFilter'; import { Loader } from '@strapi/design-system/Loader';
+import AttributeFilter from '../../components/AttributeFilter';
+import { Loader } from '@strapi/design-system/Loader';
+import ModelsContext from '../../contexts/ModelsContext';
+import Eye from '@strapi/icons/Eye';
+import EyeStriked from '@strapi/icons/EyeStriked';
 
 const cmPermissions = permissions.contentManager;
 
@@ -49,6 +54,30 @@ const IconButtonCustom = styled(IconButton)`
     }
   }
 `;
+
+const StartBlockActions = styled(Flex)`
+  & > * + * {
+    margin-left: ${({ theme }) => theme.spaces[2]};
+  }
+  margin-left: ${({ pullRight }) => (pullRight ? 'auto' : undefined)};
+`;
+
+const EndBlockActions = styled(StartBlockActions)`
+  flex-shrink: 0;
+`;
+
+const ActionLayout = ({ startActions, endActions }) => {
+  return startActions || endActions ? (
+    <Box paddingLeft={[10, 8, 1]} paddingRight={[10, 8, 0]}>
+      <Box paddingBottom={4}>
+        <Flex justifyContent="space-between" alignItems="flex-start">
+          {startActions && <StartBlockActions wrap="wrap">{startActions}</StartBlockActions>}
+          {endActions && <EndBlockActions pullRight>{endActions}</EndBlockActions>}
+        </Flex>
+      </Box>
+    </Box>
+  ) : null;
+};
 
 /* eslint-disable react/no-array-index-key */
 function ListView({
@@ -73,6 +102,7 @@ function ListView({
   const [canCreate, setCanCreate] = useState(false)
   const [isBulkable, setIsBulkable] = useState(false)
   const [loading, setLoading] = useState(true)
+  const { hiddenContentManager, handleToggleAsideBar, isCurrentMobile } = useContext(ModelsContext);
 
   useEffect(() => {
     const getData = async () => {
@@ -114,6 +144,8 @@ function ListView({
   const trackUsageRef = useRef(trackUsage);
   const fetchPermissionsRef = useRef(refetchPermissions);
   const { notifyStatus } = useNotifyAT();
+
+  const headerElement = document.getElementsByClassName('eqvhmO');
 
   useFocusWhenNavigate();
 
@@ -287,21 +319,47 @@ function ListView({
         }}
         startIcon={<Plus />}
       >
-        {formatMessage({
+        {isCurrentMobile
+          ? 'Novo'
+          : formatMessage({
           id: getTrad('HeaderLayout.button.label-add-entry'),
           defaultMessage: 'Create new entry',
         })}
       </Button>
     ) : null;
 
-  if(!canRead && loading) {
+  const handleShiftPadding = (paddingLeft, paddingRight) => {
+    if (headerElement && headerElement.length) {
+      headerElement[0].style.paddingRight = paddingRight;
+      headerElement[0].style.paddingLeft = paddingLeft;
+    }
+  };
+
+  if (isCurrentMobile) {
+    handleShiftPadding(hiddenContentManager ? '200px' : '8px', '8px');
+  } else {
+    handleShiftPadding('56px', '56px');
+  }
+
+  if (!canRead && loading) {
     return <Loader>loading</Loader>
   }
+
+  const secondaryAction = isCurrentMobile ? (
+    <Button
+      variant="tertiary"
+      onClick={handleToggleAsideBar}
+      startIcon={hiddenContentManager ? <EyeStriked/> : <Eye />}
+    >
+      Barra lateral
+    </Button>
+  ) : <></>;
 
   return (
     <Main aria-busy={isLoading}>
       <HeaderLayout
         primaryAction={getCreateAction()}
+        // secondaryAction={secondaryAction}
         subtitle={subtitle}
         title={headerLayoutTitle}
         navigationAction={
@@ -318,7 +376,7 @@ function ListView({
       )}
       {canRead && (
         <ActionLayout
-          endActions={
+          endActions={ !isCurrentMobile &&
             <>
               <InjectionZone area="contentManager.listView.actions" />
               <FieldPicker layout={layout} />
@@ -340,8 +398,9 @@ function ListView({
               </CheckPermissions>
             </>
           }
-          startActions={
-            <>
+          startActions={hiddenContentManager
+            ? secondaryAction
+            : <Box paddingTop={[0, 0, 3]}>
               {isSearchable && (
                 <SearchURLQuery
                   label={formatMessage(
@@ -358,11 +417,12 @@ function ListView({
               {isFilterable && (
                 <AttributeFilter contentType={contentType} slug={slug} metadatas={metadatas} />
               )}
-            </>
+              {secondaryAction}
+            </Box>
           }
         />
       )}
-      <ContentLayout>
+      <Box paddingLeft={[10, 5, 1]} paddingRight={[10, 5, 2]}>
         {canRead ? (
           <>
             <DynamicTable
@@ -383,7 +443,7 @@ function ListView({
         ) : (
           ((!canRead && !loading) && <NoPermissions />)
         )}
-      </ContentLayout>
+      </Box>
     </Main>
   );
 }

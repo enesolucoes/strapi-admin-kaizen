@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import { CheckPermissions, useTracking, request } from '@strapi/helper-plugin';
 import { useIntl } from 'react-intl';
-import { ContentLayout } from '@strapi/design-system/Layout';
 import { Box } from '@strapi/design-system/Box';
 import { Divider } from '@strapi/design-system/Divider';
 import { Grid, GridItem } from '@strapi/design-system/Grid';
@@ -170,7 +169,7 @@ const EditView = ({
           >
             <Main aria-busy={status !== 'resolved'}>
               <Header allowedActions={allowedActions} actions={actions} />
-              <ContentLayout>
+              <Box paddingRight={[6, 5, 3]} paddingLeft={[6, 5, 1]} paddingTop={[0, 1, 3]}>
                 <Grid gap={4}>
                   <GridItem col={9} s={12}>
                     <Stack size={6}>
@@ -204,8 +203,8 @@ const EditView = ({
                             hasRadius
                             background="neutral0"
                             shadow="tableShadow"
-                            paddingLeft={6}
-                            paddingRight={6}
+                            paddingLeft={[6, 5, 1]}
+                            paddingRight={[6, 5, 1]}
                             paddingTop={6}
                             paddingBottom={6}
                             borderColor="neutral150"
@@ -277,8 +276,8 @@ const EditView = ({
                         borderColor="neutral150"
                         hasRadius
                         paddingBottom={4}
-                        paddingLeft={4}
-                        paddingRight={4}
+                        paddingLeft={[4, 5, 1]}
+                        paddingRight={[4, 5, 1]}
                         paddingTop={6}
                         shadow="tableShadow"
                       >
@@ -392,7 +391,7 @@ const EditView = ({
                     </Stack>
                   </GridItem>
                 </Grid>
-              </ContentLayout>
+              </Box>
             </Main>
           </EditViewDataManagerProvider>
         );

@@ -1,4 +1,4 @@
-import React, { memo, useRef, useState } from 'react';
+import React, {memo, useContext, useRef, useState} from 'react';
 import { useIntl } from 'react-intl';
 import { useHistory } from 'react-router-dom';
 import get from 'lodash/get';
@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import isEqualFastCompare from 'react-fast-compare';
 import { getTrad } from '../../../utils';
 import { connect, getDraftRelations, select } from './utils';
+import ModelsContext from '../../../contexts/ModelsContext';
 
 const Header = ({
   allowedActions: { canUpdate, canCreate, canPublish },
@@ -39,6 +40,8 @@ const Header = ({
   const [showWarningDraftRelation, setShowWarningDraftRelation] = useState(false);
   const { formatMessage } = useIntl();
   const draftRelationsCountRef = useRef(0);
+  const { isCurrentMobile } = useContext(ModelsContext);
+  const headerElement = document.getElementsByClassName('eqvhmO');
 
   const currentContentTypeMainField = get(layout, ['settings', 'mainField'], 'id');
   const currentContentTypeName = get(layout, ['info', 'displayName'], 'NOT FOUND');
@@ -179,6 +182,19 @@ const Header = ({
     id: getTrad('api.id'),
     defaultMessage: 'API ID ',
   })} : ${layout.apiID}`;
+
+  const handleShiftPadding = value => {
+    if (headerElement && headerElement.length) {
+      headerElement[0].style.paddingRight = value;
+      headerElement[0].style.paddingLeft = value;
+    }
+  };
+
+  if (isCurrentMobile) {
+    handleShiftPadding('8px');
+  } else {
+    handleShiftPadding('56px');
+  }
 
   return (
     <>
