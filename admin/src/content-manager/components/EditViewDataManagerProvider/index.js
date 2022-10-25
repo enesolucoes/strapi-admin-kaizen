@@ -526,7 +526,7 @@ const EditViewDataManagerProvider = ({
       }}
     >
       <>
-        {isLoadingForData || (!isCreatingEntry && !initialData.id) ? (
+        {isLoadingForData || (!isCreatingEntry && !initialData.id) || (status === 'submit-pending') ? (
           <Main aria-busy="true">
             <LoadingIndicatorPage />
           </Main>
