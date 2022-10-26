@@ -35,7 +35,7 @@ const Header = ({
   status,
   actions
   }) => {
-    const { goBack, replace } = useHistory();
+  const { goBack, replace } = useHistory();
   const [showWarningUnpublish, setWarningUnpublish] = useState(false);
   const [showWarningDraftRelation, setShowWarningDraftRelation] = useState(false);
   const { formatMessage } = useIntl();

@@ -22,12 +22,12 @@ import { auth, usePersistentState, useAppInfos } from '@strapi/helper-plugin';
 import useConfigurations from '../../hooks/useConfigurations';
 import useModels from '../../content-manager/pages/App/useModels';
 import PopoverNotifications from './PopoverNotifications'
+import MenuLinkBadge from './MenuLinkBadge'
 import {
   LinkUserWrapper,
   LinkUser,
   Container,
-  ContainerDiv,
-  NavLinkStyled
+  ContainerDiv
 } from './styled'
 
 const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }) => {
@@ -190,8 +190,6 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
     defaultMessage: 'Strapi Dashboard',
   });
 
-  const IconBell = <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" font-size="5" class="sc-gsDKAQ sc-jrQzAO idGwtb inHzHV"><path d="M22 20H2v-2h1v-6.969C3 6.043 7.03 2 12 2s9 4.043 9 9.031V18h1v2zM9.5 21h5a2.5 2.5 0 01-5 0z" fill="#212134"></path></svg>
-
   if (isLoading) {
     return <LoadingIndicatorPage />;
   }
@@ -229,20 +227,7 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
         <Divider />
         <Container>
           <NavSections id="navsections">
-            {
-              hasNot && (
-                <NavLinkStyled
-                  badgeContent={3}
-                  to=''
-                  key={hasNot.to}
-                  icon={IconBell}
-                  onClick={handleClick}
-                  id="link-notification"
-                >
-                  Notificações
-                </NavLinkStyled>
-              )
-            }
+            <MenuLinkBadge onClick={handleClick} info={hasNot}/>
 
             {(collectionTypeLinksFiltered.length > 0) ? (
               <NavLink to="/content-manager" icon={<Write/>}>
