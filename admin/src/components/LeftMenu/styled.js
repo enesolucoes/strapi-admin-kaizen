@@ -49,9 +49,9 @@ export const TabGroupStyled = styled(TabGroup)`
 `
 
 export const Popover = styled.div`
-  position: absolute; 
-  z-index: 999; 
-  width: 500px; 
+  position: absolute;
+  z-index: 999;
+  width: 500px;
   height: 400px;
   background: white;
   border-radius: 4px;
@@ -65,8 +65,17 @@ export const NavLinkStyled = styled(NavLink)`
   background: #fff !important;
 `
 
+export const WrapperContentNotification = styled(Box)`
+  overflow: auto;
+  max-height: 345px;
+`;
+
+export const LoadMoreButton = styled(Button)`
+  margin: 24px auto;
+`;
+
 export const ContainerNot = styled.div`
-  border: 0 1 0 0; 
+  border: 0 1 0 0;
   line-height: 1.8;
   border-bottom: 1px;
   border-color: #eeeeee;
@@ -80,25 +89,25 @@ export const Title = styled.p`
 `
 
 export const Author = styled.p`
-  font-size: 13px; 
-  color: gray; 
+  font-size: 13px;
+  color: gray;
   margin: -6px auto 6px;
 `
 
 export const ContainerButton = styled.div`
-  width: 100%; 
-  display: flex; 
-  margin-top: 8px; 
-  margin-bottom: 8px; 
+  width: 100%;
+  display: flex;
+  margin-top: 8px;
+  margin-bottom: 8px;
   justify-content: end;
 `
 
 export const ButtonStyled = styled(Button)`
-  padding: 4px 8px; 
-  background: #80a5e1; 
+  padding: 4px 8px;
+  background: #80a5e1;
   border: 0;
   &:hover {
-    padding: 4px 8px !important; 
+    padding: 4px 8px !important;
     border: 0;
   }
 `
@@ -125,7 +134,7 @@ export const ButtonOk = styled(Button)`
   border: 0;
   margin-right: 16px;
   &:hover {
-    padding: 4px 8px !important; 
+    padding: 4px 8px !important;
     border: 0;
   }
 `
