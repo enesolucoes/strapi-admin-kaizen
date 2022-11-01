@@ -53,7 +53,7 @@ export const Popover = styled.div`
   z-index: 999;
   width: 500px;
   height: 400px;
-  background: white;
+  background: #ffffff;
   border-radius: 4px;
   border: 1px solid #e8e8e8;
   top: 80px;
@@ -74,7 +74,7 @@ export const LoadMoreButton = styled(Button)`
   margin: 24px auto;
 `;
 
-export const ContainerNot = styled.div`
+export const ContainerNot = styled.article`
   border: 0 1 0 0;
   line-height: 1.8;
   border-bottom: 1px;
@@ -82,6 +82,7 @@ export const ContainerNot = styled.div`
   border-style: solid;
   font-size: 14px;
   margin-bottom: 8px;
+  padding-bottom: 8px;
 `
 
 export const Title = styled.p`
@@ -121,7 +122,7 @@ export const ContainerTitle = styled.div`
   align-items: center;
 `
 
-export const TitleRed = styled.p`
+export const TitleRed = styled.h5`
   font-weight: bold;
   color: red;
   margin-left: 8px;
