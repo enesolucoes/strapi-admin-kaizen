@@ -203,7 +203,7 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
     const linkName = link.name.split(".")
     const findLink2 = permissaoMenu && permissaoMenu.find(item => item.menu === linkName[1]);
 
-    if(findLink2 && (findLink2.listar)) {
+    if (findLink2 && (findLink2.listar)) {
       return (findLink2)
     }
   });
