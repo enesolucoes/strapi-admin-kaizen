@@ -194,8 +194,8 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
     return <LoadingIndicatorPage />;
   }
 
-  const handleClick = (e) => {
-    e.preventDefault()
+  const handleToggleNotification = (event) => {
+    event && event.preventDefault()
     setVisible(s => !s)
   }
 
@@ -210,11 +210,8 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
 
   return (
     <div>
-      {visible &&
-        <PopoverNotifications />
-      }
+      {visible && <PopoverNotifications onDismiss={handleToggleNotification}/>}
       <MainNav condensed={condensed}>
-
         <NavBrand
           workplace={formatMessage({
             id: 'app.components.LeftMenu.navbrand.workplace',
@@ -227,7 +224,7 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
         <Divider />
         <Container>
           <NavSections id="navsections">
-            <MenuLinkBadge onClick={handleClick} info={hasNot}/>
+            <MenuLinkBadge onClick={handleToggleNotification} info={hasNot}/>
 
             {(collectionTypeLinksFiltered.length > 0) ? (
               <NavLink to="/content-manager" icon={<Write/>}>
