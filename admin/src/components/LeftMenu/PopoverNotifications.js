@@ -12,6 +12,8 @@ import { FocusTrap } from '@strapi/design-system/FocusTrap';
 import { Portal } from '@strapi/design-system/Portal';
 import { Loader } from '@strapi/design-system/Loader';
 import { Flex } from '@strapi/design-system/Flex';
+import { useHistory } from 'react-router-dom';
+import { useNotification } from '@strapi/helper-plugin';
 
 import {
   TabGroupStyled,
@@ -40,12 +42,19 @@ const ReminderNotication = ({
   isOpenedTab
 }) => {
   const [loading, setLoading] = useState(false);
+  ///TODO: Temporário
+  const { push } = useHistory();
   const stopDate = get(summary_reminder_notification, 'stop_date', '00/00/00 - 00:00');
   const returnDate = get(summary_reminder_notification, 'return_date', '00/00/00 - 00:00');
 
   function toggleLoading() { setLoading(prev => !prev); }
+
   function handleClick() {
     dispatchAction && dispatchAction(notification_id, toggleLoading)
+  }
+
+  function handleClickEdit() {
+    push('/plugins/controle-frentes');
   }
 
   return (
@@ -56,13 +65,15 @@ const ReminderNotication = ({
       </ContainerTitle>
       <details open={isOpenedTab}>
         <summary>{factory_name} - {front_name} - {equipment_name}</summary>
-        <p><SpanBold>Parada: </SpanBold> <time dateTime={stopDate}>{stopDate}</time></p>
-        <p><SpanBold>Retorno: </SpanBold> <time dateTime={stopDate}>{returnDate}</time></p>
+        <p>
+          <SpanBold>Parada: </SpanBold> <time dateTime={stopDate}>{stopDate}</time> &nbsp;
+          <SpanBold>Retorno: </SpanBold> <time dateTime={stopDate}>{returnDate}</time>
+        </p>
       </details>
       {
         isOpenedTab && (
           <ContainerButton>
-            <ButtonStyled disabled={loading}>Alterar</ButtonStyled>
+            <ButtonStyled disabled={loading} onClick={handleClickEdit}>Alterar</ButtonStyled>
             <ButtonOk onClick={handleClick} loading={loading}>Ok, manter</ButtonOk>
           </ContainerButton>
         )
@@ -126,6 +137,8 @@ const WrapperNotification = ({
 }) => {
   const data = get(content, 'data', []);
   const total = get(content, 'total', []);
+  const pageSize = get(content, 'pageSize', 0);
+
   function renderListNotifications() {
     return data.map(notification => {
       const isBreakingNotification = get(notification, 'notification_type', '').toLowerCase() === 'atualizacao';
@@ -142,17 +155,17 @@ const WrapperNotification = ({
       return <Component {...pickContent}/>
     });
   }
-  const noData = !data.length;
+  const { length } = data;
   return (
     <WrapperContentNotification color="neutral800" padding={4} background="neutral0">
-      { (isLoading && noData)
-        ? <Flex justifyContent="center" paddingTop={112}><Loader /></Flex>
-        : noData
+      { (isLoading && !length)
+        ? <Flex justifyContent="center" paddingTop={10}><Loader/></Flex>
+        : !length
           ? noContentLayout
           :
             <>
               {renderListNotifications()}
-              { (total !== data.length) && (
+              {((total !== length) && (length >= pageSize)) && (
                 <LoadMoreButton
                   variant="secondary"
                   startIcon={<Refresh/>}
@@ -173,6 +186,7 @@ const PopoverNotifications = ({ onDismiss = () => {}}) => {
   const [content, setContent] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const { id } = JSON.parse(sessionStorage.getItem('userInfo') || {});
+  const toggleNotification = useNotification();
 
   useEffect(() => {
     (requestNotifications)();
@@ -200,12 +214,20 @@ const PopoverNotifications = ({ onDismiss = () => {}}) => {
 
     } catch (err) {
       console.error(err);
+      toggleNotification({
+        type: 'warning',
+        lockTransition: false,
+        message: `\t\t ao obter as notificações ${tab ? 'abertas' : 'concluídas'}.`
+      });
     } finally {
       toggleLoading();
     }
   }
 
-  async function dispatchActionNotification(notificationId, toggleLoading = () => {}) {
+  async function requestActionNotification(notificationId, toggleLoading = () => {}) {
+
+    const message = '\t\t ao concluir a notificação!';
+
     try {
       toggleLoading();
       const response = await backInstance.post(`/notifications/${notificationId}/close?&userId=${id}`);
@@ -214,16 +236,24 @@ const PopoverNotifications = ({ onDismiss = () => {}}) => {
           const data = prev.data.filter(({ notification_id }) => notification_id !== notificationId);
           delete prev['data'];
           return Object.assign({ data }, prev);
-        })
+        });
+
+        toggleNotification({type: 'success', message});
       }
     } catch (err) {
       console.error(err);
+      toggleNotification({type: 'warning', message});
     } finally {
       toggleLoading();
     }
   }
 
   function toggleLoading() { setIsLoading(prev => !prev); }
+
+  function toggleTab(tabbing) {
+    setContent({});
+    setTab(tabbing)
+  }
 
   const noContentLayout = (
     <EmptyStateLayout
@@ -235,7 +265,7 @@ const PopoverNotifications = ({ onDismiss = () => {}}) => {
     />
   );
 
-  const commonProps = { content, isLoading, noContentLayout, requestNotifications, dispatchAction: dispatchActionNotification, isOpenedTab: !tab };
+  const commonProps = { content, isLoading, noContentLayout, requestNotifications, dispatchAction: requestActionNotification, isOpenedTab: !tab };
 
   return (
     <Portal>
@@ -245,7 +275,7 @@ const PopoverNotifications = ({ onDismiss = () => {}}) => {
           <TabGroupStyled
             id="tabs"
             label="Abas de notificações"
-            onTabChange={setTab}
+            onTabChange={toggleTab}
           >
             <Tabs>
               <Tab>Abertas</Tab>
