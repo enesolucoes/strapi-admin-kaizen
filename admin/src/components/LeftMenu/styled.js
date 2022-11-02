@@ -59,6 +59,10 @@ export const Popover = styled.div`
   top: 80px;
   left: 68px;
   box-shadow: 0 1px 6px #d4d4d4;
+  
+  @media only screen and (max-width: 47.9375rem) {
+    width: 305px;
+  }
 `
 
 export const NavLinkStyled = styled(NavLink)`
