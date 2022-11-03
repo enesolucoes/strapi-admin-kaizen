@@ -10,8 +10,16 @@ const MenuLinkBadge = ({ info, onClick }) => {
   if (!info) { return <></>; }
 
   useEffect(() => {
+    handleEventListener();
     (async () => requestIndicatorCounter())();
+
+    return () => handleEventListener(true);
   }, []);
+
+  function handleEventListener(isRemove = false) {
+    const eventListenerType = document && (isRemove ? document.removeEventListener : document.addEventListener);
+    eventListenerType('newNotification', requestIndicatorCounter);
+  }
 
   async function requestIndicatorCounter() {
     try {
