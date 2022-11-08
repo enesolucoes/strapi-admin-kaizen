@@ -13,7 +13,7 @@ import { Portal } from '@strapi/design-system/Portal';
 import { Loader } from '@strapi/design-system/Loader';
 import { Flex } from '@strapi/design-system/Flex';
 import { useHistory } from 'react-router-dom';
-import { useNotification } from '@strapi/helper-plugin';
+import { useNotification, usePersistentState } from '@strapi/helper-plugin';
 
 import {
   TabGroupStyled,
@@ -32,6 +32,10 @@ import {
 } from './styled'
 import { backInstance } from '../../services/backendInstance';
 
+function formatDate(date) {
+  return new Date(date).toLocaleString().substring(0, 16).replace(' ', ' - ');
+}
+
 const ReminderNotication = ({
   notification_id,
   factory_name,
@@ -39,13 +43,18 @@ const ReminderNotication = ({
   equipment_name,
   summary_reminder_notification,
   dispatchAction,
-  isOpenedTab
+  isOpenedTab,
+  time_type,
+  onDismiss,
+  amount_load
 }) => {
   const [loading, setLoading] = useState(false);
-  ///TODO: Temporário
+  const [_, setContentNotification] = usePersistentState('contentToEditNotification', true);
   const { push } = useHistory();
-  const stopDate = get(summary_reminder_notification, 'stop_date', '00/00/00 - 00:00');
-  const returnDate = get(summary_reminder_notification, 'return_date', '00/00/00 - 00:00');
+
+  const defaultDateValue = new Date().toISOString();
+  const stopDate = formatDate(get(summary_reminder_notification, 'stop_date', defaultDateValue));
+  const returnDate = formatDate(get(summary_reminder_notification, 'return_date', defaultDateValue));
 
   function toggleLoading() { setLoading(prev => !prev); }
 
@@ -55,6 +64,7 @@ const ReminderNotication = ({
 
   function handleClickEdit() {
     push('/plugins/controle-frentes');
+    onDismiss();
   }
 
   return (
@@ -69,6 +79,7 @@ const ReminderNotication = ({
           <SpanBold>Parada: </SpanBold> <time dateTime={stopDate}>{stopDate}</time> &nbsp;
           <SpanBold>Retorno: </SpanBold> <time dateTime={stopDate}>{returnDate}</time>
         </p>
+        {(amount_load && (time_type !== 'colhedora')) && <p><SpanBold>Capacidade de carga: </SpanBold>{amount_load}</p>}
       </details>
       {
         isOpenedTab && (
@@ -78,7 +89,6 @@ const ReminderNotication = ({
           </ContainerButton>
         )
       }
-
     </ContainerNot>
   );
 };
@@ -91,29 +101,39 @@ const BreakingNotification = ({
   updater_user,
   summary_update_notification,
   updated_at,
+  created_at,
   dispatchAction,
-  isOpenedTab
+  isOpenedTab,
+  time_type,
+  amount_load
 }) => {
   const [loading, setLoading] = useState(false);
-  const nonStop = get(summary_update_notification, 'date', '00/00/00 - 00:00');
 
   function toggleLoading() { setLoading(prev => !prev); }
 
   function handleClick() {
     dispatchAction && dispatchAction(notification_id, toggleLoading)
   }
+
+  const insertedByFirst = get(updater_user, 'firstname') || get(creator_user, 'firstname');
+  const insertedBySecond = get(updater_user, 'lastname') || get(creator_user, 'lastname');
+  const defaultDate = new Date().toISOString();
+  const nonStop = formatDate(get(summary_update_notification, 'date', defaultDate));
+  const duration = new Date(get(summary_update_notification, 'duration??', defaultDate)).toTimeString().substring(0, 5);
+
   return (
     <ContainerNot>
-      <Title>Atualização de tempos - {updated_at}</Title>
-      <Author>Inserido por {get(updater_user, 'firstname')}&nbsp;{get(updater_user, 'lastname')}</Author>
+      <Title>Atualização de tempos - {created_at || updated_at}</Title>
+      <Author>Inserido por {insertedByFirst}&nbsp;{insertedBySecond}</Author>
       <details open={isOpenedTab}>
         <summary>{factory_name} - {front_name} - {equipment_name}</summary>
         <p>
           <SpanBold>Não parada </SpanBold>
           <time dateTime={nonStop}> - {nonStop}</time> - <SpanBold>Tempo de carregamento: </SpanBold>
-          <time>{get(summary_update_notification, 'duration', '00:00')}</time>
+          <time>{duration}</time>
         </p>
         <p> <SpanBold>Motivo: </SpanBold>{get(summary_update_notification, 'reason')}</p>
+        {(amount_load && (time_type !== 'colhedora')) && <p><SpanBold>Capacidade de carga: </SpanBold>{amount_load}</p>}
       </details>
       {
         isOpenedTab && (
@@ -133,7 +153,8 @@ const WrapperNotification = ({
  noContentLayout,
  requestNotifications,
  dispatchAction,
- isOpenedTab
+ isOpenedTab,
+ onDismiss
 }) => {
   const data = get(content, 'data', []);
   const total = get(content, 'total', []);
@@ -143,6 +164,7 @@ const WrapperNotification = ({
     return data.map(notification => {
       const isBreakingNotification = get(notification, 'notification_type', '').toLowerCase() === 'atualizacao';
       const pickContent = Object.assign({
+          onDismiss,
           isOpenedTab,
           total,
           key: notification.notification_id,
@@ -265,7 +287,7 @@ const PopoverNotifications = ({ onDismiss = () => {}}) => {
     />
   );
 
-  const commonProps = { content, isLoading, noContentLayout, requestNotifications, dispatchAction: requestActionNotification, isOpenedTab: !tab };
+  const commonProps = { content, isLoading, noContentLayout, requestNotifications, dispatchAction: requestActionNotification, isOpenedTab: !tab, onDismiss };
 
   return (
     <Portal>

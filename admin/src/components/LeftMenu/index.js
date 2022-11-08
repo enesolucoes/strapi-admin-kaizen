@@ -234,29 +234,29 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
 
 
             {filteredPluginSection.length > 0 ? (
-            <NavSection label="Plugins">
-              {filteredPluginSection.map(link => {
+              <NavSection label="Plugins">
+                {filteredPluginSection.map(link => {
 
-                if (link.to === '/plugins/notificacoes' || (link.to === '/plugins/content-type-builder' && !isMaster)) {
-                  return null
-                }
+                  if (link.to === '/plugins/notificacoes' || (link.to === '/plugins/content-type-builder' && !isMaster)) {
+                    return null
+                  }
 
-                const Icon = link.icon;
-                const hasAbas = permissaoMenu.filter(item => (item.menu === link.intlLabel.defaultMessage) && item.aba)
+                  const Icon = link.icon;
+                  const hasAbas = permissaoMenu.filter(item => (item.menu === link.intlLabel.defaultMessage) && item.aba)
 
-                if(hasAbas.length) {
-                  const canList = hasAbas.filter(item => item.listar)
-                  if (!canList.length) return null
-                }
+                  if(hasAbas.length) {
+                    const canList = hasAbas.filter(item => item.listar)
+                    if (!canList.length) return null
+                  }
 
-                return (
-                  <NavLink to={link.to} key={link.to} icon={<Icon />}>
-                    {formatMessage(link.intlLabel)}
-                  </NavLink>
-                );
-              })}
-            </NavSection>
-          ) : null}
+                  return (
+                    <NavLink to={link.to} key={link.to} icon={<Icon />}>
+                      {formatMessage(link.intlLabel)}
+                    </NavLink>
+                  );
+                })}
+              </NavSection>
+            ) : null}
 
 
           {(hasPermissionUsers.length || hasPermission.length) ? (
