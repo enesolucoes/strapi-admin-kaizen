@@ -13,7 +13,7 @@ import { Portal } from '@strapi/design-system/Portal';
 import { Loader } from '@strapi/design-system/Loader';
 import { Flex } from '@strapi/design-system/Flex';
 import { useHistory } from 'react-router-dom';
-import { useNotification, usePersistentState } from '@strapi/helper-plugin';
+import { useNotification } from '@strapi/helper-plugin';
 
 import {
   TabGroupStyled,
@@ -36,21 +36,26 @@ function formatDate(date) {
   return new Date(date).toLocaleString().substring(0, 16).replace(' ', ' - ');
 }
 
-const ReminderNotication = ({
-  notification_id,
-  factory_name,
-  front_name,
-  equipment_name,
-  summary_reminder_notification,
-  dispatchAction,
-  isOpenedTab,
-  time_type,
-  onDismiss,
-  amount_load
-}) => {
+function formatTimeString(date) {
+  return new Date(date).toTimeString();
+}
+
+const ReminderNotication = props => {
+  const {
+    notification_id,
+    factory_name,
+    front_name,
+    equipment_name,
+    summary_reminder_notification,
+    dispatchAction,
+    isOpenedTab,
+    time_type,
+    onDismiss,
+    amount_load
+  } = props;
+
   const [loading, setLoading] = useState(false);
-  const [_, setContentNotification] = usePersistentState('contentToEditNotification', true);
-  const { push } = useHistory();
+  const { push, location: { pathname } } = useHistory();
 
   const defaultDateValue = new Date().toISOString();
   const stopDate = formatDate(get(summary_reminder_notification, 'stop_date', defaultDateValue));
@@ -59,11 +64,50 @@ const ReminderNotication = ({
   function toggleLoading() { setLoading(prev => !prev); }
 
   function handleClick() {
-    dispatchAction && dispatchAction(notification_id, toggleLoading)
+    dispatchAction && dispatchAction(notification_id, toggleLoading);
   }
 
   function handleClickEdit() {
-    push('/plugins/controle-frentes');
+    const path = '/plugins/controle-frentes';
+    const id_frente = get(props, 'front_id');
+    const payload = {
+      front: id_frente,
+      factory: get(props, 'factory_id'),
+      id: notification_id,
+      id_tipo_equipamento: get(props, 'equipment_type_id'),
+      motivo: get(summary_reminder_notification, 'reason'),
+      id_equipamento: get(props, 'equipment_id'),
+      id_quantidade_carga: get(summary_reminder_notification, 'amount_load_id'),
+      qtd_carga: amount_load,
+      id_frente,
+      data_atualizacao: get(props, 'updated_at'),
+      hora_atualizacao: get(props, 'created_at'),
+      duracao: null,
+      hora_retorno: get(summary_reminder_notification, 'return_date'),
+      hora_prevista_parada: formatTimeString(get(summary_reminder_notification, 'stop_date')),
+      hora_prevista_retorno: formatTimeString(get(summary_reminder_notification, 'return_date')),
+      parada: true,
+      qtd_equipamentos_parada: get(summary_reminder_notification, 'number_tractors_stop'),
+      qtd_equipamentos_retorno: get(summary_reminder_notification, 'number_tractors_return'),
+      qtd_equipamentos: null,
+      id_referencia: null,
+      created_at: get(props, 'created_at'),
+      updated_at: get(props, 'updated_at'),
+      created_by_id: get(props, 'updater_user.id'),
+      updated_by_id: get(props, 'creator_user.id'),
+      integrado: false,
+      username_created: get(props,'creator_user.firstname'),
+      username_updated: get(props,'updater_user.firstname'),
+      reason: get(summary_reminder_notification, 'reason'),
+      isQtyTractor: true,
+      hour: null,
+      loading_time: null
+    };
+
+    sessionStorage.setItem('contentEditFromNotification', JSON.stringify(payload));
+    document.dispatchEvent(new Event('eventEditNotifications', { bubbles: true, composed: true }));
+
+    !pathname.includes(path) && push(path);
     onDismiss();
   }
 
@@ -76,7 +120,7 @@ const ReminderNotication = ({
       <details open={isOpenedTab}>
         <summary>{factory_name} - {front_name} - {equipment_name}</summary>
         <p>
-          <SpanBold>Parada: </SpanBold> <time dateTime={stopDate}>{stopDate}</time> &nbsp;
+          <SpanBold>Parada: </SpanBold> <time dateTime={stopDate}>{stopDate}</time> /&nbsp;
           <SpanBold>Retorno: </SpanBold> <time dateTime={stopDate}>{returnDate}</time>
         </p>
         {(amount_load && (time_type !== 'colhedora')) && <p><SpanBold>Capacidade de carga: </SpanBold>{amount_load}</p>}
@@ -99,6 +143,7 @@ const BreakingNotification = ({
   front_name,
   equipment_name,
   updater_user,
+  creator_user,
   summary_update_notification,
   updated_at,
   created_at,
@@ -119,20 +164,21 @@ const BreakingNotification = ({
   const insertedBySecond = get(updater_user, 'lastname') || get(creator_user, 'lastname');
   const defaultDate = new Date().toISOString();
   const nonStop = formatDate(get(summary_update_notification, 'date', defaultDate));
-  const duration = new Date(get(summary_update_notification, 'duration??', defaultDate)).toTimeString().substring(0, 5);
+  const duration = formatTimeString(get(summary_update_notification, 'duration', defaultDate)).substring(0, 5);
+  const motive = get(summary_update_notification, 'reason', null);
 
   return (
     <ContainerNot>
-      <Title>Atualização de tempos - {created_at || updated_at}</Title>
+      <Title>Atualização de tempos - {formatDate(updated_at || created_at)}</Title>
       <Author>Inserido por {insertedByFirst}&nbsp;{insertedBySecond}</Author>
       <details open={isOpenedTab}>
         <summary>{factory_name} - {front_name} - {equipment_name}</summary>
         <p>
           <SpanBold>Não parada </SpanBold>
-          <time dateTime={nonStop}> - {nonStop}</time> - <SpanBold>Tempo de carregamento: </SpanBold>
+          <time dateTime={nonStop}> - {nonStop}</time> / <SpanBold>Tempo de carregamento: </SpanBold>
           <time>{duration}</time>
         </p>
-        <p> <SpanBold>Motivo: </SpanBold>{get(summary_update_notification, 'reason')}</p>
+        {motive && <p><SpanBold>Motivo: </SpanBold>{motive}</p>}
         {(amount_load && (time_type !== 'colhedora')) && <p><SpanBold>Capacidade de carga: </SpanBold>{amount_load}</p>}
       </details>
       {
