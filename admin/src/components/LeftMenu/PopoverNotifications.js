@@ -37,6 +37,7 @@ function formatDate(date) {
 }
 
 function formatTimeString(date) {
+  if (date && (date.length <= 8)) { return date };
   return new Date(date).toTimeString();
 }
 
@@ -298,7 +299,7 @@ const PopoverNotifications = ({ onDismiss = () => {}}) => {
 
     try {
       toggleLoading();
-      const response = await backInstance.post(`/notifications/${notificationId}/close?&userId=${id}`);
+      const response = await backInstance.patch(`/notifications/${notificationId}/close?userId=${id}`);
       if (response.status == 200) {
         setContent(prev => {
           const data = prev.data.filter(({ notification_id }) => notification_id !== notificationId);

@@ -68,26 +68,6 @@ function App() {
           data: { hasAdmin, uuid },
         } = await request('/admin/init', { method: 'GET' });
 
-        if (uuid) {
-          try {
-            const deviceId = await getUID();
-
-            fetch('https://analytics.strapi.io/track', {
-              method: 'POST',
-              body: JSON.stringify({
-                event: 'didInitializeAdministration',
-                uuid,
-                deviceId,
-              }),
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            });
-          } catch (e) {
-            // Silent.
-          }
-        }
-
         setState({ isLoading: false, hasAdmin, uuid });
       } catch (err) {
         toggleNotification({
