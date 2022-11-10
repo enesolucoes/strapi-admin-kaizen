@@ -90,18 +90,18 @@ const ListPage = () => {
   const findPermission = async() => {
      if(permissionsUsers?.id) return null
      const { id } = JSON.parse(sessionStorage.getItem('userInfo') || {});
- 
+
      const userPermission = await request('/content-manager/collection-types/api::usuario-permissao.usuario-permissao/?filters[$and][0][id_usuario][$eq]=' + id, { method: 'GET' });
      const result = userPermission.results[0]
- 
+
      if (result && result.id_permissao) {
        const { results }  = await request('/content-manager/collection-types/api::permissao-menu.permissao-menu/?pageSize=1000&filters[$and][0][permissao][id][$eq]=' + result.id_permissao, { method: 'GET' });
 
        const findPermissionUsers = results.find(item => item.menu === 'Usuários')
        setPermissionsUsers(findPermissionUsers)
- 
+
        const permissionDetail = await request('/content-manager/collection-types/api::permissao.permissao?page=1&pageSize=1&sort=id:ASC&filters[$and][0][id][$eq]='+result.id_permissao, { method: 'GET' });
- 
+
        const permissionMaster = permissionDetail.results[0].Nome.toLowerCase() === 'masterdk';
        setIsMaster(permissionMaster)
      }
@@ -188,7 +188,7 @@ const ListPage = () => {
     (status !== 'success' && status !== 'error') || (status === 'success' && isFetching);
 
 
-  if(loading) 
+  if (loading)
     return (
       <ContainerLoader>
         <Loader>loading</Loader>

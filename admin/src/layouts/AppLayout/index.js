@@ -12,10 +12,10 @@ const FlexContainer = styled(Flex)`
 
 const FlexBox = styled(Box)`
   flex: 1;
-  overflow: auto;
 `;
 
 const ContainerSideNav = styled.div`
+  position: fixed;
   position: fixed;
   height: 100%;
   background: white;
@@ -33,7 +33,7 @@ const AppLayout = ({ children, sideNav, menuCondensed }) => {
       </SkipToContent>
       <FlexContainer alignItems="flex-start" id="flex">
         <ContainerSideNav>{sideNav}</ContainerSideNav>
-        <FlexBox style={{ marginLeft: margin }}>{children}</FlexBox>
+        <FlexBox style={{ marginLeft: margin, overflow: (window && window.location.pathname) === '/admin/settings/users' ? 'hidden' : 'auto' }}>{children}</FlexBox>
       </FlexContainer>
     </Box>
   );
