@@ -81,7 +81,7 @@ const ReminderNotication = props => {
       id_quantidade_carga: get(summary_reminder_notification, 'amount_load_id'),
       qtd_carga: amount_load,
       id_frente,
-      data_atualizacao: get(props, 'updated_at'),
+      data_atualizacao: get(props, 'updated_at') || get(props, 'created_at'),
       hora_atualizacao: get(props, 'created_at'),
       duracao: null,
       hora_retorno: get(summary_reminder_notification, 'return_date'),
