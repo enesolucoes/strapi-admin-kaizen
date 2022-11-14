@@ -25,7 +25,7 @@ const PasswordInput = styled(TextInput)`
   }
 `;
 
-const Login = ({ onSubmit, schema, children }) => {
+const Login = ({ onSubmit, schema, children, forceLogin }) => {
   const [passwordShown, setPasswordShown] = useState(false);
   const { formatMessage } = useIntl();
 
@@ -72,6 +72,11 @@ const Login = ({ onSubmit, schema, children }) => {
                   >
                     {errors.errorMessage}
                   </Typography>
+                )}
+                {forceLogin && (
+                  <Button type="submit">
+                    Clique aqui para forçar login
+                  </Button>
                 )}
               </Column>
 
@@ -136,9 +141,11 @@ const Login = ({ onSubmit, schema, children }) => {
                   required
                 />
                 
-                <Button fullWidth type="submit">
+                <Button fullWidth type="submit" disabled={forceLogin}>
                   {formatMessage({ id: 'Auth.form.button.login', defaultMessage: 'Login' })}
                 </Button>
+
+
               </Stack>
             </Form>
           )}

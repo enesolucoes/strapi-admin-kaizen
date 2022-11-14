@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 import axios from 'axios';
 import camelCase from 'lodash/camelCase';
 import get from 'lodash/get';
@@ -14,6 +14,7 @@ import { initialState, reducer } from './reducer';
 
 const AuthPage = ({ hasAdmin, setHasAdmin }) => {
   const { push } = useHistory();
+  const [forceLogin, setForceLogin] = useState(false);
   const { changeLocale } = useLocalesProvider();
   const {
     params: { authType },
@@ -109,14 +110,88 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
         cancelToken: source.token,
       });
 
-      if (user.preferedLanguage) {
-        changeLocale(user.preferedLanguage);
+      let detais = null
+
+      await axios.get(
+        `https://kaizen-house-hml.enesolucoes.com.br/content-manager/collection-types/api::usuario-empresa.usuario-empresa?filters[$and][0][id_usuario][$eq]=${user.id}`,
+        {headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json; charset=utf-8',
+        }
+      }).then(({ data }) => {
+        detais = data.results
+      })
+      
+      let detailsCompany = null
+
+      if(detais.length) {
+        await axios.get(
+          `https://kaizen-house-hml.enesolucoes.com.br/content-manager/collection-types/api::empresa.empresa?filters[$and][0][id][$eq]=${detais[0].id_empresa}`,
+          {headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json; charset=utf-8',
+          }
+        }).then(({ data }) => {
+          detailsCompany = data.results
+        })
+
+        // SALVAR NO LOCALSTORAGE
+
+        const data = {
+          "softwareId": detailsCompany[0].id_software,
+          "enterpriseId": detailsCompany[0].id_login,
+          "licenseAccessedId": user.id.toString(),
+          "token": token,
+          "dateExpiresToken": "2022-12-07 19:12:00",
+          "forceUpdate": forceLogin 
+        }
+
+        await axios.post(
+          'https://sistema-login-kaizen.herokuapp.com/enterprises/license-access', data
+          ).then(() => {
+            if (user.preferedLanguage) {
+              changeLocale(user.preferedLanguage);
+            }
+
+            sessionStorage.setItem("company", detailsCompany[0]);
+      
+            auth.setToken(token, body.rememberMe);
+            auth.setUserInfo(user, body.rememberMe);
+      
+            push('/');
+          }).catch((err) => {
+            if (err.response) {
+              const error1 = get(
+                err,
+                ['response', 'data', 'message'],
+                null
+              );
+
+              setForceLogin(true)
+
+              const error2 = get(
+                err,
+                ['response', 'data', 'error', 'message'],
+                'Something went wrong'
+              );
+
+      
+              const errorMessage = error1 || error2;
+
+              if (camelCase(errorMessage).toLowerCase() === 'usernotactive') {
+                push('/auth/oops');
+      
+                dispatch({
+                  type: 'RESET_PROPS',
+                });
+      
+                return;
+              }
+      
+              setErrors({ errorMessage });
+            }
+          })
       }
-
-      auth.setToken(token, body.rememberMe);
-      auth.setUserInfo(user, body.rememberMe);
-
-      push('/');
     } catch (err) {
       if (err.response) {
         const errorMessage = get(
@@ -246,6 +321,7 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
       onSubmit={handleSubmit}
       requestError={requestError}
       schema={schema}
+      forceLogin={forceLogin}
     />
   );
 };
