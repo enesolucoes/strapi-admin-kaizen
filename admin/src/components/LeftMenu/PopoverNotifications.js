@@ -224,17 +224,17 @@ const WrapperNotification = ({
       return <Component {...pickContent}/>
     });
   }
-  const { length } = data;
+
   return (
     <WrapperContentNotification color="neutral800" padding={4} background="neutral0">
-      { (isLoading && !length)
+      { (isLoading && !data.length)
         ? <Flex justifyContent="center" paddingTop={10}><Loader/></Flex>
-        : !length
+        : !data.length
           ? noContentLayout
           :
             <>
               {renderListNotifications()}
-              {((total !== length) && (length >= pageSize)) && (
+              {((total !== data.length) && (data.length >= pageSize)) && (
                 <LoadMoreButton
                   variant="secondary"
                   startIcon={<Refresh/>}
@@ -262,7 +262,7 @@ const PopoverNotifications = ({ onDismiss = () => {}}) => {
   }, [tab]);
 
   function verifyFetchingReminders(content) {
-    return (!tab && get(content, 'isNextPage', false) && !get(content, 'data', []).length);
+    return (!tab && get(content, 'isNextPage', false) && !get(content, 'data.length', 0));
   }
 
   async function requestNotifications() {
@@ -274,6 +274,13 @@ const PopoverNotifications = ({ onDismiss = () => {}}) => {
       const isRemindersFar = verifyFetchingReminders(response);
 
       if (response.data) {
+        if (get(response, 'data.currentPage') > get(content, 'currentPage')) {
+          const oldNotifications = content.data;
+          const newNotifications = Object.create(response.data);
+          newNotifications.data = oldNotifications.concat(newNotifications.data);
+          setContent(newNotifications);
+          return;
+        }
         setContent(response.data);
       }
 
@@ -308,6 +315,7 @@ const PopoverNotifications = ({ onDismiss = () => {}}) => {
         });
 
         toggleNotification({type: 'success', message});
+        document && document.dispatchEvent(new Event('newNotification', { bubbles: true, composed: true }));
       }
     } catch (err) {
       console.error(err);
