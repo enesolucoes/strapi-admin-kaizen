@@ -273,7 +273,9 @@ const PopoverNotifications = ({ onDismiss = () => {}}) => {
       const response = await backInstance.get(`/notifications/${type}?page=${page}&pageSize=10&userId=${id}`);
       const isRemindersFar = verifyFetchingReminders(response);
 
-      if (response.data) {
+      if (isRemindersFar) {
+        requestNotifications();
+      } else if (response.data) {
         if (get(response, 'data.currentPage') > get(content, 'currentPage')) {
           const oldNotifications = content.data;
           const newNotifications = Object.create(response.data);
@@ -282,10 +284,6 @@ const PopoverNotifications = ({ onDismiss = () => {}}) => {
           return;
         }
         setContent(response.data);
-      }
-
-      if (isRemindersFar) {
-        requestNotifications();
       }
 
     } catch (err) {
