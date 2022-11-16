@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { NavLinkStyled } from './styled'
 import { backInstance } from '../../services/backendInstance';
 
@@ -6,19 +6,21 @@ const IconBell = <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" a
 
 const MenuLinkBadge = ({ info, onClick }) => {
   const [content, setContent] = useState(0);
+  const interval = useRef(null);
 
   if (!info) { return <></>; }
 
   useEffect(() => {
     handleEventListener();
-    (async () => requestIndicatorCounter())();
-
+    (requestIndicatorCounter)();
+    interval.current = setInterval(requestIndicatorCounter, 60000);
     return () => handleEventListener(true);
   }, []);
 
   function handleEventListener(isRemove = false) {
     const eventListenerType = document && (isRemove ? document.removeEventListener : document.addEventListener);
     eventListenerType('newNotification', requestIndicatorCounter);
+    isRemove && clearInterval(interval.current);
   }
 
   async function requestIndicatorCounter() {
