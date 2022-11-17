@@ -225,8 +225,7 @@ const WrapperNotification = ({
       return <Component {...pickContent}/>
     });
   }
-
-  const commonRuleToRefresh = ((total !== data.length) && (data.length >= pageSize));
+  const commonRuleToRefresh = (( data.length < total));
   const isOpenWithNextPage = isOpenedTab && isNextPage;
   const noNotifications = !data.length;
 
