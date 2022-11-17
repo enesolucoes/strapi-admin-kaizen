@@ -206,6 +206,7 @@ const WrapperNotification = ({
   const data = get(content, 'data', []);
   const total = get(content, 'total', []);
   const pageSize = get(content, 'pageSize', 0);
+  const isNextPage = get(content, 'isNextPage', false);
 
   function renderListNotifications() {
     return data.map(notification => {
@@ -225,16 +226,20 @@ const WrapperNotification = ({
     });
   }
 
+  const commonRuleToRefresh = ((total !== data.length) && (data.length >= pageSize));
+  const isOpenWithNextPage = isOpenedTab && isNextPage;
+  const noNotifications = !data.length;
+
   return (
     <WrapperContentNotification color="neutral800" padding={4} background="neutral0">
-      { (isLoading && !data.length)
+      { (isLoading && noNotifications)
         ? <Flex justifyContent="center" paddingTop={10}><Loader/></Flex>
-        : !data.length
+        : (isOpenedTab ? (!isNextPage && noNotifications) : noNotifications)
           ? noContentLayout
           :
             <>
               {renderListNotifications()}
-              {((total !== data.length) && (data.length >= pageSize)) && (
+              {(isOpenWithNextPage || commonRuleToRefresh) && (
                 <LoadMoreButton
                   variant="secondary"
                   startIcon={<Refresh/>}
@@ -261,21 +266,27 @@ const PopoverNotifications = ({ onDismiss = () => {}}) => {
     (requestNotifications)();
   }, [tab]);
 
-  function verifyFetchingReminders(content) {
-    return (!tab && get(content, 'isNextPage', false) && !get(content, 'data.length', 0));
+
+  function getCalcPagination() {
+    const isFetchingFarReminders = (!tab && get(content, 'isNextPage', false));
+    const thereIsContent = get(content, 'data.length', 0);
+    const currentPage = get(content, 'currentPage');
+
+    if (isFetchingFarReminders) {
+      return currentPage + (thereIsContent ? 1 : 0);
+    }
+
+    return !thereIsContent ? 1 : currentPage + 1;
   }
 
   async function requestNotifications() {
     try {
       !isLoading && toggleLoading();
       const type = tab ? 'closed' : 'open';
-      const page = !get(content, 'data.length', 0) && !verifyFetchingReminders(content) ?  1 : get(content, 'currentPage') + 1;
+      const page = getCalcPagination();
       const response = await backInstance.get(`/notifications/${type}?page=${page}&pageSize=10&userId=${id}`);
-      const isRemindersFar = verifyFetchingReminders(response);
 
-      if (isRemindersFar) {
-        requestNotifications();
-      } else if (response.data) {
+      if (response.data) {
         if (get(response, 'data.currentPage') > get(content, 'currentPage')) {
           const oldNotifications = content.data;
           const newNotifications = Object.create(response.data);
