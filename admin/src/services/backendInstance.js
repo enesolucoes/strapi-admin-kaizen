@@ -1,8 +1,12 @@
 import axios from 'axios';
 import { auth } from '@strapi/helper-plugin';
 
+const url = (CUSTOM_VARIABLES.NODE_ENV === 'production')? 
+  'https://listagem-calculos.dailykaizenconsultoria.com.br' :
+  'https://kaizen-house-hml-calc.enesolucoes.com.br'
+
 const backInstance = axios.create({
-  baseURL: CUSTOM_VARIABLES.URL_DISPATCH,
+  baseURL: url,
 });
 
 const token = JSON.parse(sessionStorage.getItem('jwtToken'))
