@@ -11,6 +11,8 @@ import useLocalesProvider from '../../components/LocalesProvider/useLocalesProvi
 import formatAPIErrors from '../../utils/formatAPIErrors';
 import init from './init';
 import { initialState, reducer } from './reducer';
+import storage from './utils/storage'; 
+import { size } from 'lodash';
 
 const AuthPage = ({ hasAdmin, setHasAdmin }) => {
   const { push } = useHistory();
@@ -112,6 +114,10 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
       if (user.preferedLanguage) {
         changeLocale(user.preferedLanguage);
       }
+
+      const enterpriseDetails = await getEnterpriseDetails(token, user?.id);
+
+      storage.setItem('enterprise', enterpriseDetails);
 
       auth.setToken(token, body.rememberMe);
       auth.setUserInfo(user, body.rememberMe);
@@ -221,6 +227,48 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
       setSubmitting(false);
     }
   };
+
+  const getEnterpriseDetails = async (token, userId) => {
+    const BASE_URL = (CUSTOM_VARIABLES.NODE_ENV === 'production')
+      ? 'https://kaizenlog.dailykaizenconsultoria.com.br/content-manager/collection-types'
+      : 'https://kaizen-house-hml.enesolucoes.com.br/content-manager/collection-types';
+      
+    const enterpriseDetails = {
+      id: null,
+      externalId: null
+    };
+
+    const responseEnterpriseUser = await axios.get(
+      `${BASE_URL}/api::usuario-empresa.usuario-empresa?filters[$and][0][id_usuario][$eq]=${userId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json; charset=utf-8',
+        }
+      }
+    );
+
+    const enterpriseUserDetais = get(responseEnterpriseUser, ['data', 'results', '0']);
+
+    if(size(enterpriseUserDetais)) {
+      const enterpriseDetailsResponse = await axios.get(
+        `${BASE_URL}/api::empresa.empresa?filters[$and][0][id][$eq]=${enterpriseUserDetais.id_empresa}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json; charset=utf-8',
+          }
+        }
+      );
+      
+      const enterprise = get(enterpriseDetailsResponse, ['data', 'results', '0']);
+
+      enterpriseDetails.id = enterprise?.id;
+      enterpriseDetails.externalId = enterprise?.id_login;
+    }
+
+    return enterpriseDetails;
+  }
 
   // Redirect the user to the login page if
   // the endpoint does not exist or
