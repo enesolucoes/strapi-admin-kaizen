@@ -37,6 +37,7 @@ export const LinkUser = styled(Link)`
 
 export const Container = styled.div`
   overflow: auto;
+  overflow-x: hidden;
   height: calc(100% - 126px);
 `
 
