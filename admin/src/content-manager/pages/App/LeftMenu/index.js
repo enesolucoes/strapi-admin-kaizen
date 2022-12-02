@@ -100,7 +100,9 @@ const LeftMenu = () => {
     'permissao-menu', 
     'usuario-permissao', 
     'tempos-bkp', 
-    'equipamento-status-bkp'
+    'equipamento-status-bkp',
+    'empresa',
+    'usuario-empresa'
   ]
 
   const collectionTypeLinksFiltered = collectionTypeLinks.filter((link) => {
