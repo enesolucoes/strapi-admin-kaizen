@@ -252,7 +252,7 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
 
     if(size(enterpriseUserDetais)) {
       const enterpriseDetailsResponse = await axios.get(
-        `${BASE_URL}/api::empresa.empresa?filters[$and][0][id][$eq]=${enterpriseUserDetais.id_empresa}`,
+        `${BASE_URL}/api::empresa.empresa?filters[$and][0][id_login][$eq]=${enterpriseUserDetais.id_empresa}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
