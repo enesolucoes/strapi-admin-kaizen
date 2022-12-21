@@ -1,12 +1,21 @@
 import axios from 'axios';
 import { auth } from '@strapi/helper-plugin';
 
+import { formatUrlWithNewFilter, validateUnrelatedDataServices } from '../../utils';
+
 const instance = axios.create({
   baseURL: process.env.STRAPI_ADMIN_BACKEND_URL,
 });
 
 instance.interceptors.request.use(
   async config => {
+    const isAnUnrelatedDataServices = validateUnrelatedDataServices(config?.url);
+
+    if (config?.method === 'post' && isAnUnrelatedDataServices) {
+      const { query_column } = isAnUnrelatedDataServices;
+      config.url = config?.url + formatUrlWithNewFilter(query_column, "$null", true, config?.url);
+    }
+
     config.headers = {
       Authorization: `Bearer ${auth.getToken()}`,
       Accept: 'application/json',
