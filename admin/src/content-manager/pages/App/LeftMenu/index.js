@@ -96,11 +96,12 @@ const LeftMenu = () => {
     'quantidade-carga',
     'tipo-equipamento',
     'troca-de-turno',
-    'permissao', 
-    'permissao-menu', 
-    'usuario-permissao', 
-    'tempos-bkp', 
-    'equipamento-status-bkp'
+    'permissao',
+    'permissao-menu',
+    'usuario-permissao',
+    'tempos-bkp',
+    'equipamento-status-bkp',
+    'usina'
   ]
 
   const collectionTypeLinksFiltered = collectionTypeLinks.filter((link) => {
