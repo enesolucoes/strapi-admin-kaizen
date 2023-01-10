@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Box } from '@strapi/design-system/Box';
-import { Tabs, Tab, TabPanels, TabPanel } from '@strapi/design-system/Tabs';
-import { EmptyStateLayout } from '@strapi/design-system/EmptyStateLayout';
-import { Button } from '@strapi/design-system/Button';
-import get from 'lodash/get';
-import omit from 'lodash/omit';
-import EmptyDocuments from '@strapi/icons/EmptyDocuments';
+import { useHistory } from 'react-router-dom';
 import Refresh from '@strapi/icons/Refresh';
-import { DismissibleLayer } from './DismissibleLayer';
-import { FocusTrap } from '@strapi/design-system/FocusTrap';
+import { Flex } from '@strapi/design-system/Flex';
+import { Button } from '@strapi/design-system/Button';
 import { Portal } from '@strapi/design-system/Portal';
 import { Loader } from '@strapi/design-system/Loader';
-import { Flex } from '@strapi/design-system/Flex';
-import { useHistory } from 'react-router-dom';
 import { useNotification } from '@strapi/helper-plugin';
+import EmptyDocuments from '@strapi/icons/EmptyDocuments';
+import { FocusTrap } from '@strapi/design-system/FocusTrap';
+import { EmptyStateLayout } from '@strapi/design-system/EmptyStateLayout';
+import { Tabs, Tab, TabPanels, TabPanel } from '@strapi/design-system/Tabs';
+import get from 'lodash/get';
+import omit from 'lodash/omit';
+
+
+import { DismissibleLayer } from './DismissibleLayer';
+
+import storage from '../../utils/storage';
+import { backInstance } from '../../services/backendInstance';
 
 import {
   TabGroupStyled,
@@ -30,7 +34,6 @@ import {
   WrapperContentNotification,
   LoadMoreButton
 } from './styled'
-import { backInstance } from '../../services/backendInstance';
 
 function formatDate(date) {
   return new Date(date).toLocaleString().substring(0, 16).replace(' ', ' - ');
@@ -258,7 +261,7 @@ const PopoverNotifications = ({ onDismiss = () => {}}) => {
   const [tab, setTab] = useState(0);
   const [content, setContent] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const { id } = JSON.parse(sessionStorage.getItem('userInfo') || {});
+  const { id } = storage.getItem('userInfo') || {};
   const toggleNotification = useNotification();
 
   useEffect(() => {
